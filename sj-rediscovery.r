@@ -1,3 +1,287 @@
+########################
+# DECLARING FUNCTIONS #
+########################
+library(data.table,quietly=T)
+library(dplyr)
+library(stringr)
+library(GenomicRanges,quietly=T)
+library(ggplot2)
+
+# This function reads in all the SJ.tab files given in the list and merges them all together to give a list of unique SJs with total numbers of occurences across all the datasets in the list.
+
+# Merge all SJ.tab.out files within the given SJ.tab.list to produce a list of unique SJs with total numbers of occurences across all the datasets in the list
+
+########
+## 1. ## 
+########
+merge.SJ.files <- function(SJ.tab.list){
+	# First read in all the files in the list
+	SJ.file.list <- list()
+	for(i in 1:length(SJ.tab.list)){
+        	SJ <- as.data.frame(fread(SJ.tab.list[i]))
+        	SJ.file.list[[i]] <- SJ
+        }
+	# rbind all together
+	SJ.merge <- rbindlist(SJ.file.list)
+	SJ.merge <- as.data.frame(SJ.merge)
+	#Use dplyr to group the total list of splice junctions by unique SJ and then sum the total of the cases.
+	by_coord <- group_by(SJ.merge, paste(V1,V2,V3))
+	SJ.summary <- summarise(by_coord,
+        	count.unique = sum(V7),
+        	count.multi = sum(V8), # count of multi-mapping reads
+        	strand = mean(V4),
+			intron.motif = mean(V5)
+        	)
+	names(SJ.summary)[1] <- "coord"
+	#split the coordinate reference into columns
+	SJ.summary$chr <- str_split_fixed(SJ.summary$coord, " ", 3)[,1]
+	SJ.summary$start <- str_split_fixed(SJ.summary$coord, " ", 3)[,2]
+	SJ.summary$end <- str_split_fixed(SJ.summary$coord, " ", 3)[,3]
+	#this is where columns are dropped?
+	SJ.summary <- SJ.summary[,c(6,7,8,2,3,4,5)]
+	SJ.summary <- as.data.frame(SJ.summary)
+	SJ.summary$start <- as.numeric(SJ.summary$start)
+	SJ.summary$end <- as.numeric(SJ.summary$end)
+	# make strand readable
+	SJ.summary[SJ.summary$strand == 1,]$strand <- "+"
+	SJ.summary[SJ.summary$strand == 2,]$strand <- "-"
+    SJ.summary[SJ.summary$strand == 0,]$strand <- "*"
+    #make intron motif readable
+	motif.list <- c("non-canonical","GT/AG","CT/AC","GC/AG","CT/GC","AT/AC","GT/AT")
+	for(i in 1:7){
+		if(length(SJ.summary[SJ.summary$intron.motif == (i - 1),]$intron.motif) > 0){
+			SJ.summary[SJ.summary$intron.motif == (i - 1),]$intron.motif <- motif.list[i]
+		} 
+	}
+	#unique SJs will become "score" field in GRanges object
+	names(SJ.summary)[4] <- "score"
+	return(SJ.summary)
+}
+
+########
+## 2. ## 
+########
+
+#this function below allows you to specify which GRange object to query
+canonical_junction_query <- function(CE.chr,CE.start,CE.end, SJ.GRange){
+        junction <- SJ.GRange[seqnames(SJ.GRange)==CE.chr & start(SJ.GRange) <= as.numeric(CE.start)+1 & end(SJ.GRange) >= as.numeric(CE.end)-1]
+        junction <- head(junction[order(score(junction),decreasing=T)],1)
+        return(junction)
+}
+
+########
+## 3. ## 
+########
+# this function looks for junctions in the case dataset that exactly match those discovered in the control dataset.
+canonical_junction_replication <- function(CE.chr,canonical.start,canonical.end,SJ.GRange){
+	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) == as.numeric(canonical.start) & end(SJ.GRange) == as.numeric(canonical.end)]
+	return(junction)
+}
+
+########
+## 4. ## 
+########
+#this function looks for SJs that span from the upstream end of the canonical intron to the 5' end of the cryptic exon. Only the most abundant SJ will be reported.
+#does this have to be canonical.start or canonical.start +1?
+upstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.start,SJ.GRange){
+	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) == as.numeric(canonical.start) & end(SJ.GRange) >= as.numeric(CE.start) - 1 & end(SJ.GRange) < as.numeric(CE.end)]
+	junction <- head(junction[order(score(junction),decreasing=T)],1)
+    return(junction)
+}
+
+########
+## 5. ## 
+########
+downstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.end,SJ.GRange){
+	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) > as.numeric(CE.start) & start(SJ.GRange) <= as.numeric(CE.end) + 1 & end(SJ.GRange) == as.numeric(canonical.end)]
+	junction <- head(junction[order(score(junction),decreasing=T)],1)
+    return(junction)
+}
+
+########
+## 6. ## 
+########
+#applying the above function to each cryptic exon and cleaning up the result
+canonical_junction_detector <- function(SJ.summary,results.df,mode="discovery"){
+	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T)
+	if(mode == "discovery"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_query(x[10],x[11],x[12], GRanges_object))
+		}
+	if(mode == "replication"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_replication(x[10],x[15],x[16], GRanges_object))	
+	}
+	#output is a list of GRange objects - unuseable.
+	junctions.list <- unlist(GRangesList(junctions.list))
+	#convert into a dataframe, extracting the relevent information from the GRanges object.
+	#names(GRanges) is a vector of rownames, confusingly.
+	canonical.df <- data.frame(row.names=names(junctions.list),
+			canonical.chr=seqnames(junctions.list),
+			canonical.start=start(junctions.list),
+			canonical.end=end(junctions.list),
+			canonical.unique.count = score(junctions.list),
+			canonical.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	return(canonical.df)
+}
+
+# need to find the counts of canonical junctions that were assigned by canonical_junction_detector in the case dataset.
+
+########
+## 7. ## 
+########
+#This function assumes that the results file has been appended with the canonical start and end coordinates at positions ??? and ??? respectively.
+bridging_junction_finder <- function(SJ.summary, results.df, query.type){
+	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T)
+	if(query.type == "downstream"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) downstream_junction_query(x[10],x[11],x[12], x[16], GRanges_object))
+	}
+	if(query.type == "upstream"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) upstream_junction_query(x[10],x[11],x[12], x[15], GRanges_object))
+	}
+	#output is a list of GRange objects - unuseable.
+	junctions.list <- unlist(GRangesList(junctions.list))
+	#convert into a dataframe, extracting the relevent information from the GRanges object.
+	#names(GRanges) is a vector of rownames, confusingly.
+	if(query.type == "downstream"){
+		bridging_junctions.df <- data.frame(row.names=names(junctions.list),
+			chr=seqnames(junctions.list),
+			cryptic.3prime=start(junctions.list),
+			canonical.end=end(junctions.list),
+			downstream.unique.count = score(junctions.list),
+			downstream.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	}
+	if(query.type == "upstream"){
+		bridging_junctions.df <- data.frame(row.names=names(junctions.list),
+			chr=seqnames(junctions.list),
+			canonical.start=start(junctions.list),
+			cryptic.5prime=end(junctions.list),
+			upstream.unique.count = score(junctions.list),
+			upstream.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	}
+	return(bridging_junctions.df)
+}
+
+########
+## 8. ## 
+########
+fix.gene.names <- function(results.df,annotation){
+	# This is a function to find the most likely gene name for a given genomic range.
+	# If multiple genes overlap the query range then output the names appended together with "+".
+	# Get the strand information as well. If multiple genes are returned and their strands agree then output that strand.
+	# If multiple genes are returned and the strands do not agree then output NA.
+	gene.names.query <- function(chromosome, canonical.start, canonical.end, anno.GRange){
+		gene.name <- anno.GRange[seqnames(anno.GRange) == chromosome & start(anno.GRange) <= as.numeric(canonical.start) & end(anno.GRange) >= as.numeric(canonical.end)]
+		#if multiple gene names come up then collapse all the gene names into one string separated by "+".
+		if(length(gene.name) > 1){
+			mcols(gene.name)[,2] <- paste(mcols(gene.name)[,2],collapse="+")	
+		# and strand as well!
+		# if the different genes have differing strands then assign strand as NA.
+			if(length(unique(as.list(strand(gene.name)))) != 1){
+				strand(gene.name) <- NA
+			}
+			gene.name <- gene.name[1]
+		}
+		return(gene.name)
+	}
+	annotation <- as.data.frame(fread(annotation,header=T,stringsAsFactors=F))
+	#sort out annotation and turn into a GRanges object. remove gm genes
+	names(annotation)[4:5] <- c("start","end")
+	anno.GRange<-  makeGRangesFromDataFrame(annotation,keep.extra.columns=T)
+	fixed.gene.names <- apply(results.df, MAR=1,FUN=function(x) gene.names.query(x[10],x[15],x[16],anno.GRange)) 
+	fixed.gene.names <- unlist(GRangesList(fixed.gene.names))
+	fixed.gene.names <- data.frame(row.names=names(fixed.gene.names),gene <- mcols(fixed.gene.names)[,2], fixed.strand=strand(fixed.gene.names))
+	names(fixed.gene.names)[1] <- "fixed.gene.id"
+	#fixed.gene.names$fixed.strand <- gsub("+","1",fixed.gene.names$fixed.strand,fixed=T)
+	#fixed.gene.names$fixed.strand <- gsub("-","-1",fixed.gene.names$fixed.strand,fixed=T)
+	return(fixed.gene.names)
+}
+
+########
+## 9. ## 
+########
+cryptic.classifier <- function(crypt.counts){
+	classer <- function(subset.df,classification){
+		if(dim(subset.df)[1] > 0){
+			subset.df$class <- classification
+			return(subset.df$class)
+		}
+	}
+	# Classify the tags with small fold changes or low read depths (of the number of canonical junction reads)
+	FEW.READS.UP <- subset(crypt.counts, (as.numeric(log2FoldChange)) > 0  & canonical.control.mean.SJ < min.canonical.control.SJs )
+	FEW.READS.UP$class <- classer(FEW.READS.UP,"FEW.READS.UP")
+
+	FEW.READS.DOWN <- subset(crypt.counts, (as.numeric(log2FoldChange)) < 0  & canonical.control.mean.SJ < min.canonical.control.SJs )
+	FEW.READS.DOWN$class <- classer(FEW.READS.DOWN,"FEW.READS.DOWN")
+
+	SMALL.FOLDCHANGE.UP <- subset(crypt.counts, as.numeric(log2FoldChange) < 0.6 & as.numeric(log2FoldChange) > 0 )
+	SMALL.FOLDCHANGE.UP$class <- classer(SMALL.FOLDCHANGE.UP, "SMALL.FOLDCHANGE.UP")
+
+	SMALL.FOLDCHANGE.DOWN <- subset(crypt.counts, as.numeric(log2FoldChange) > -0.6 & as.numeric(log2FoldChange) < 0 )
+	SMALL.FOLDCHANGE.DOWN$class <- classer(SMALL.FOLDCHANGE.DOWN, "SMALL.FOLDCHANGE.DOWN")
+	
+	CLEAN.UP <- subset(crypt.counts, as.numeric(log2FoldChange) >= 0.6  & canonical.control.mean.SJ >= min.canonical.control.SJs )
+	
+	SJ.UNSUPPORTED.UP <- subset(CLEAN.UP,
+		(CLEAN.UP$upstream.case.mean.SJ < 1 &
+		CLEAN.UP$downstream.case.mean.SJ < 1 ) | 
+		CLEAN.UP$PSI.class == "TOO.SMALL.PSI" )
+	SJ.UNSUPPORTED.UP$class <- classer(SJ.UNSUPPORTED.UP,"SJ.UNSUPPORTED.UP")
+
+	SJ.SUPPORTED.UP <- subset(CLEAN.UP,
+		(CLEAN.UP$upstream.case.mean.SJ >= 1 |
+		CLEAN.UP$downstream.case.mean.SJ >= 1) &
+		CLEAN.UP$PSI.class != "TOO.SMALL.PSI" )
+	SJ.SUPPORTED.UP$class <- classer(SJ.SUPPORTED.UP,"SJ.SUPPORTED.UP")
+	
+	CLEAN.DOWN <- subset(crypt.counts, as.numeric(log2FoldChange) <= -0.6 & canonical.control.mean.SJ >= min.canonical.control.SJs )
+	SJ.UNSUPPORTED.DOWN <- subset(CLEAN.DOWN,
+	  ( CLEAN.DOWN$upstream.case.mean.SJ < 1 &
+		CLEAN.DOWN$downstream.case.mean.SJ < 1 ) |
+		CLEAN.DOWN$PSI.class == "TOO.SMALL.PSI" )
+	SJ.UNSUPPORTED.DOWN$class <- classer(SJ.UNSUPPORTED.DOWN,"SJ.UNSUPPORTED.DOWN")
+
+	SJ.SUPPORTED.DOWN <- subset(CLEAN.DOWN,
+		(CLEAN.DOWN$upstream.case.mean.SJ >= 1 |
+		CLEAN.DOWN$downstream.case.mean.SJ >= 1) &
+		CLEAN.DOWN$PSI.class != "TOO.SMALL.PSI" )
+	SJ.SUPPORTED.DOWN$class <- classer(SJ.SUPPORTED.DOWN,"SJ.SUPPORTED.DOWN")
+
+	crypt.counts.classified <- rbind(SJ.SUPPORTED.UP,SJ.SUPPORTED.DOWN,SJ.UNSUPPORTED.UP,SJ.UNSUPPORTED.DOWN,SMALL.FOLDCHANGE.UP,SMALL.FOLDCHANGE.DOWN,FEW.READS.UP,FEW.READS.DOWN)
+
+	return(crypt.counts.classified)
+}
+
+#########
+## 10. ## 
+#########
+cryptic.PSI.classifier <- function(cryptic.exons){
+  classer <- function(subset.df,classification){
+    if(dim(subset.df)[1] > 0){
+      subset.df$class <- classification
+      return(subset.df$class)
+    }
+  }
+# Classify the tags with small fold changes or low read depths
+
+  FIVEPRIME.BIAS <- subset(cryptic.exons, (as.numeric(upstream_delta_psi) >= PSI.threshold) & (as.numeric(downstream_delta_psi) < PSI.threshold) )
+  FIVEPRIME.BIAS$PSI.class <- classer(FIVEPRIME.BIAS,"FIVEPRIME.BIAS")
+  
+  THREEPRIME.BIAS <- subset(cryptic.exons, (as.numeric(upstream_delta_psi) < PSI.threshold) & (as.numeric(downstream_delta_psi) >= PSI.threshold) )
+  THREEPRIME.BIAS$PSI.class <- classer(THREEPRIME.BIAS,"THREEPRIME.BIAS")
+  
+  CASSETTE.LIKE <- subset(cryptic.exons, (as.numeric(upstream_delta_psi) >= PSI.threshold ) & (as.numeric(downstream_delta_psi) >= PSI.threshold) )
+  CASSETTE.LIKE$PSI.class <- classer(CASSETTE.LIKE,"CASSETTE.LIKE")
+  
+  TOO.SMALL.PSI <- subset(cryptic.exons, (as.numeric(upstream_delta_psi) <= PSI.threshold )& (as.numeric(downstream_delta_psi) <= PSI.threshold) )
+  TOO.SMALL.PSI$PSI.class <- classer(TOO.SMALL.PSI,"TOO.SMALL.PSI")
+  
+  cryptic.exons.PSI.classified <- rbind(FIVEPRIME.BIAS,THREEPRIME.BIAS,CASSETTE.LIKE,TOO.SMALL.PSI)
+  return(cryptic.exons.PSI.classified)
+}
+         
+## Begin analysis
 #############
 ## CONTROL ##
 #############
