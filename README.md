@@ -1,2 +1,2 @@
 # cryptex-scn
-CryptEx run on sciatic nerve samples
+CryptEx run on sciatic nerve TDP-43-cKO samples
