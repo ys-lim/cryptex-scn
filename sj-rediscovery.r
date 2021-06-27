@@ -1,3 +1,10 @@
+# LOAD IN DEXSEQ RESULTS
+
+###=========
+## STRATEGY
+###=========
+# Each cryptic exon sits within an intron but the start and end of that intron cannot be inferred from the GFF file alone. Instead the canonical junction should be the junction that falls outside of the cryptic exons's coordinates with the most junction reads.
+
 ########################
 # DECLARING FUNCTIONS #
 ########################
