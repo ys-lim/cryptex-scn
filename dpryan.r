@@ -1,3 +1,12 @@
+# http://seqanswers.com/forums/archive/index.php/t-42420.html 
+# Using dexseq to detect intron retention events in diseased samples
+# Count how many reads map to each intron then use dexseq to do comparison
+# Identification of differential intron retention using dexseq --> need to prepare intron count & annotation files
+
+# INPUT: an annotation GFF file prepared by dexseq
+# PROCESS: adds in "intronic_part" records with associated gene_ids
+# OUTPUT: 1 file containing = original exonic bins + newer intronic bins
+
 library(GenomicRanges)
 library(rtracklayer)
 library(parallel)
