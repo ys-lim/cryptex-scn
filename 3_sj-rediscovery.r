@@ -16,11 +16,12 @@ library(ggplot2)
 
 # This function reads in all the SJ.tab files given in the list and merges them all together to give a list of unique SJs with total numbers of occurences across all the datasets in the list.
 
-# Merge all SJ.tab.out files within the given SJ.tab.list to produce a list of unique SJs with total numbers of occurences across all the datasets in the list
+
 
 ########
 ## 1. ## 
 ########
+# This function merges all SJ.tab.out files within the given SJ.tab.list to produce a list of unique SJs with total numbers of occurences across all the datasets in the list
 merge.SJ.files <- function(SJ.tab.list){
 	# First read in all the files in the list
 	SJ.file.list <- list()
@@ -69,17 +70,18 @@ merge.SJ.files <- function(SJ.tab.list){
 ## 2. ## 
 ########
 
-#this function below allows you to specify which GRange object to query
-canonical_junction_query <- function(CE.chr,CE.start,CE.end, SJ.GRange){
-        junction <- SJ.GRange[seqnames(SJ.GRange)==CE.chr & start(SJ.GRange) <= as.numeric(CE.start)+1 & end(SJ.GRange) >= as.numeric(CE.end)-1]
-        junction <- head(junction[order(score(junction),decreasing=T)],1)
+# this function below allows you to specify which GRange object to query
+# this function outputs the canonical junction flanking the cryptic tag (since there could be multiple)
+canonical_junction_query <- function(CE.chr,CE.start,CE.end, SJ.GRange){ # iterate each SJ through the GRanges of SJs
+        junction <- SJ.GRange[seqnames(SJ.GRange)==CE.chr & start(SJ.GRange) <= as.numeric(CE.start)+1 & end(SJ.GRange) >= as.numeric(CE.end)-1] # obtain that particular SJ
+        junction <- head(junction[order(score(junction),decreasing=T)],1) # we only want the most abundantly supported SJ
         return(junction)
 }
 
 ########
 ## 3. ## 
 ########
-# this function looks for junctions in the case dataset that exactly match those discovered in the control dataset.
+# this function looks for junctions in the case dataset that exactly match those canonical junctions discovered in the control dataset
 canonical_junction_replication <- function(CE.chr,canonical.start,canonical.end,SJ.GRange){
 	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) == as.numeric(canonical.start) & end(SJ.GRange) == as.numeric(canonical.end)]
 	return(junction)
@@ -90,6 +92,7 @@ canonical_junction_replication <- function(CE.chr,canonical.start,canonical.end,
 ########
 #this function looks for SJs that span from the upstream end of the canonical intron to the 5' end of the cryptic exon. Only the most abundant SJ will be reported.
 #does this have to be canonical.start or canonical.start +1?
+# This is where the EXACT cryptic exon 5' site is discovered
 upstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.start,SJ.GRange){
 	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) == as.numeric(canonical.start) & end(SJ.GRange) >= as.numeric(CE.start) - 1 & end(SJ.GRange) < as.numeric(CE.end)]
 	junction <- head(junction[order(score(junction),decreasing=T)],1)
@@ -99,6 +102,7 @@ upstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.start,SJ.GR
 ########
 ## 5. ## 
 ########
+# Similar to upstream_junction_query, but for 3' site
 downstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.end,SJ.GRange){
 	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) > as.numeric(CE.start) & start(SJ.GRange) <= as.numeric(CE.end) + 1 & end(SJ.GRange) == as.numeric(canonical.end)]
 	junction <- head(junction[order(score(junction),decreasing=T)],1)
@@ -108,17 +112,17 @@ downstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.end,SJ.GR
 ########
 ## 6. ## 
 ########
-#applying the above function to each cryptic exon and cleaning up the result
+#applying the above functions to each cryptic tag and cleaning up the result
 canonical_junction_detector <- function(SJ.summary,results.df,mode="discovery"){
-	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T)
+	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T) # convert the combined SJ file into a GRanges obj
 	if(mode == "discovery"){
-		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_query(x[10],x[11],x[12], GRanges_object))
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_query(x[10],x[11],x[12], GRanges_object)) # this is for control
 		}
 	if(mode == "replication"){
-		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_replication(x[10],x[15],x[16], GRanges_object))	
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_replication(x[10],x[15],x[16], GRanges_object)) # this is for case
 	}
 	#output is a list of GRange objects - unuseable.
-	junctions.list <- unlist(GRangesList(junctions.list))
+	junctions.list <- unlist(GRangesList(junctions.list)) # list of canonical junctions in results.df, referenced from SJ.summary GRanges obj
 	#convert into a dataframe, extracting the relevent information from the GRanges object.
 	#names(GRanges) is a vector of rownames, confusingly.
 	canonical.df <- data.frame(row.names=names(junctions.list),
@@ -136,13 +140,14 @@ canonical_junction_detector <- function(SJ.summary,results.df,mode="discovery"){
 ########
 ## 7. ## 
 ########
-#This function assumes that the results file has been appended with the canonical start and end coordinates at positions ??? and ??? respectively.
+#This function assumes that the results file has been appended with the canonical start and end coordinates at positions XXX and YYY respectively.
+# This function combines downstream_junction_query and upstream_junction_query to find the EXACT splice sites of cryptic exons
 bridging_junction_finder <- function(SJ.summary, results.df, query.type){
 	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T)
-	if(query.type == "downstream"){
+	if(query.type == "downstream"){ # 3'
 		junctions.list <- apply(results.df, MAR=1,FUN=function(x) downstream_junction_query(x[10],x[11],x[12], x[16], GRanges_object))
 	}
-	if(query.type == "upstream"){
+	if(query.type == "upstream"){ # 5'
 		junctions.list <- apply(results.df, MAR=1,FUN=function(x) upstream_junction_query(x[10],x[11],x[12], x[15], GRanges_object))
 	}
 	#output is a list of GRange objects - unuseable.
@@ -208,24 +213,25 @@ fix.gene.names <- function(results.df,annotation){
 ########
 ## 9. ## 
 ########
+# Classify/annotate the tags with small fold changes or low read depths (of the number of canonical junction reads)
+
 cryptic.classifier <- function(crypt.counts){
-	classer <- function(subset.df,classification){
+	classer <- function(subset.df,classification){ # helper function to annotate with classification of read depth/fold change
 		if(dim(subset.df)[1] > 0){
 			subset.df$class <- classification
 			return(subset.df$class)
 		}
 	}
-	# Classify the tags with small fold changes or low read depths (of the number of canonical junction reads)
-	FEW.READS.UP <- subset(crypt.counts, (as.numeric(log2FoldChange)) > 0  & canonical.control.mean.SJ < min.canonical.control.SJs )
+	FEW.READS.UP <- subset(crypt.counts, (as.numeric(log2FoldChange)) > 0  & canonical.control.mean.SJ < min.canonical.control.SJs ) # actual filter
 	FEW.READS.UP$class <- classer(FEW.READS.UP,"FEW.READS.UP")
 
-	FEW.READS.DOWN <- subset(crypt.counts, (as.numeric(log2FoldChange)) < 0  & canonical.control.mean.SJ < min.canonical.control.SJs )
+	FEW.READS.DOWN <- subset(crypt.counts, (as.numeric(log2FoldChange)) < 0  & canonical.control.mean.SJ < min.canonical.control.SJs ) # actual filter
 	FEW.READS.DOWN$class <- classer(FEW.READS.DOWN,"FEW.READS.DOWN")
 
-	SMALL.FOLDCHANGE.UP <- subset(crypt.counts, as.numeric(log2FoldChange) < 0.6 & as.numeric(log2FoldChange) > 0 )
+	SMALL.FOLDCHANGE.UP <- subset(crypt.counts, as.numeric(log2FoldChange) < 0.6 & as.numeric(log2FoldChange) > 0 ) # actual filter
 	SMALL.FOLDCHANGE.UP$class <- classer(SMALL.FOLDCHANGE.UP, "SMALL.FOLDCHANGE.UP")
 
-	SMALL.FOLDCHANGE.DOWN <- subset(crypt.counts, as.numeric(log2FoldChange) > -0.6 & as.numeric(log2FoldChange) < 0 )
+	SMALL.FOLDCHANGE.DOWN <- subset(crypt.counts, as.numeric(log2FoldChange) > -0.6 & as.numeric(log2FoldChange) < 0 ) # actual filter
 	SMALL.FOLDCHANGE.DOWN$class <- classer(SMALL.FOLDCHANGE.DOWN, "SMALL.FOLDCHANGE.DOWN")
 	
 	CLEAN.UP <- subset(crypt.counts, as.numeric(log2FoldChange) >= 0.6  & canonical.control.mean.SJ >= min.canonical.control.SJs )
@@ -263,8 +269,9 @@ cryptic.classifier <- function(crypt.counts){
 #########
 ## 10. ## 
 #########
+# This function, based on difference in delta PSI, classifies whether it is a 5'/3' bias or cassette exon
 cryptic.PSI.classifier <- function(cryptic.exons){
-  classer <- function(subset.df,classification){
+  classer <- function(subset.df,classification){ # another helper function to print the classification
     if(dim(subset.df)[1] > 0){
       subset.df$class <- classification
       return(subset.df$class)
@@ -288,20 +295,24 @@ cryptic.PSI.classifier <- function(cryptic.exons){
   return(cryptic.exons.PSI.classified)
 }
          
+				  
 ## Begin analysis
 #############
 ## CONTROL ##
 #############
+# we start with controls first, to discover the canonical SJs flanking each cryptic tag.
 
 library("dplyr")
 library("data.table")
 library("stringr")
 
+# merge SJ tab files (from STAR)
 STAR_control_SJ_list <- c("ctr1.SJ.out.tab","ctr2.SJ.out.tab","ctr3.SJ.out.tab") 
-
 STAR_control_total_SJ_counts <- merge.SJ.files(STAR_control_SJ_list)
 head(STAR_control_total_SJ_counts)
 write.table(STAR_control_total_SJ_counts, "STAR_tdp43_cnp_scn_SJs_control.tab", quote=F,sep="\t",row.names=F)
+				  
+# Load in dexseq results containing cryptic tag information
 STAR_dexseq.res <- "24may_scn_SignificantExons_STAR.csv"
 STAR_crypt.res <- as.data.frame(fread(STAR_dexseq.res))
 nrow(STAR_crypt.res)
@@ -310,6 +321,7 @@ nrow(STAR_crypt.res)
 STAR_crypt.res <- subset(STAR_crypt.res,grepl("i",exonID) & FDR < 0.05)
 nrow(STAR_crypt.res) #492 rows
 
+# Finding canonical junctions flanking each cryptic tag
 STAR_canonical_results_control <- canonical_junction_detector(SJ.summary = STAR_control_total_SJ_counts, 
                                                          results.df = STAR_crypt.res, 
                                                          mode = "discovery") 
@@ -332,8 +344,8 @@ STAR_NA_crypt.res <- subset(STAR_crypt.res,is.na(STAR_crypt.res$canonical.chr))
 
 
 ## COUNTING UPSTREAM JUNCTIONS IN CONTROLS
-# need to find the counts of canonical junctions that were assigned by canonical_junction_detector in the case dataset.
-#This function assumes that the results file has been appended with the canonical start and end coordinates at positions ??? and ??? respectively.
+# Why is this necessary? We are assuming there is a cryptic exon within control too?
+# Anyway this finds the exact 5' cryptic splice sites for control cryptic tags, based on SJ splicing into the cryptic tag
 STAR_upstream_results_control <- bridging_junction_finder(SJ.summary = STAR_control_total_SJ_counts,
                                                      results.df = STAR_crypt.res,
                                                      query.type = "upstream")
@@ -343,6 +355,7 @@ nrow(STAR_upstream_results_control) #158 rows
 head(STAR_crypt.res)
 nrow(STAR_crypt.res) # 486 rows
 
+# Add the CRYPTIC 5' splice site coordinates to cryptic exon df
 STAR_crypt.res$upstream.control.canonical.start <- STAR_upstream_results_control$canonical.start[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_control))]
 STAR_crypt.res$upstream.control.cryptic.5prime <- STAR_upstream_results_control$cryptic.5prime[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_control))]
 STAR_crypt.res$upstream.control.strand <- STAR_upstream_results_control$upstream.strand[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_control))]
@@ -352,6 +365,7 @@ STAR_crypt.res$upstream.control.mean.SJ <- STAR_crypt.res$upstream.control.mean.
 
 
 ## COUNTING DOWNSTREAM JUNCTIONS IN CONTROLS
+# Repeat the same for 3' cryptic site
 STAR_downstream_results_control <- bridging_junction_finder(SJ.summary = STAR_control_total_SJ_counts, 
                                                        results.df = STAR_crypt.res, 
                                                        query.type = "downstream")
@@ -361,6 +375,7 @@ nrow(STAR_downstream_results_control) #159 rows
 head(STAR_crypt.res)
 nrow(STAR_crypt.res) # 486 rows
 
+# Add the CRYPTIC 3' splice site coordinates to cryptic exon df
 STAR_crypt.res$downstream.control.cryptic.3prime <- STAR_downstream_results_control$cryptic.3prime[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_control))]
 STAR_crypt.res$downstream.control.canonical.end <- STAR_downstream_results_control$canonical.end[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_control))]
 STAR_crypt.res$downstream.control.strand <- STAR_downstream_results_control$downstream.strand[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_control))]
@@ -368,22 +383,29 @@ STAR_crypt.res$downstream.control.intron.motif <- STAR_downstream_results_contro
 STAR_crypt.res$downstream.control.mean.SJ <- STAR_downstream_results_control$downstream.unique.count[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_control))]
 STAR_crypt.res$downstream.control.mean.SJ <- STAR_crypt.res$downstream.control.mean.SJ / length(STAR_control_SJ_list)
 
+# Once Controls are done, we move on to Case
+
 ##########
 ## CASE ##
 ##########
 
+# merge SJ tab files (from STAR)
 STAR_case_SJ_list <- c("cKO1.SJ.out.tab","cKO2.SJ.out.tab","cKO3.SJ.out.tab") 
 STAR_case_total_SJ_counts <- merge.SJ.files(STAR_case_SJ_list)
 
 head(STAR_case_total_SJ_counts)
 write.table(STAR_case_total_SJ_counts, "STAR_tdp43_cnp_scn_SJs_case.tab", quote=F,sep="\t",row.names=F)
 
-# This function looks for junctions in the case dataset that exactly match those discovered in the control dataset.
 # STAR_crypt.res is now augmented with the coordinates discovered previously for the canonical sites
+# This function looks for canonical junctions in the case dataset that exactly match those discovered in the control dataset.
+# Why do we need to do this? --> Because we want to find the SJ splicing from the canonical splice sites into the cryptic tag region
+
 head(STAR_case_total_SJ_counts)
 head(STAR_crypt.res[10])
 head(STAR_crypt.res[11])
 head(STAR_crypt.res[12])
+
+# We want to find junctions in the merged SJ summary file that matches exactly the canonical splice junctions discovered earlier in Controls analysis
 STAR_canonical_results_case <- canonical_junction_detector(SJ.summary = STAR_case_total_SJ_counts, 
                                                       results.df = STAR_crypt.res, 
                                                       mode = "replication")
@@ -392,13 +414,14 @@ head(STAR_canonical_results_case)
 STAR_crypt.res$canonical.case.mean.SJ <- STAR_canonical_results_case$canonical.unique.count[match(rownames(STAR_crypt.res),rownames(STAR_canonical_results_case))]
 STAR_crypt.res$canonical.case.mean.SJ <- STAR_crypt.res$canonical.case.mean.SJ / length(STAR_control_SJ_list)
 
-# upstream junctions in cases
+# Discovering 5' EXACT cryptic exon sites in case
 STAR_upstream_results_case <- bridging_junction_finder(SJ.summary = STAR_case_total_SJ_counts, 
                                                   results.df = STAR_crypt.res, 
                                                   query.type = "upstream")
 head(STAR_upstream_results_case)
 head(upstream_results_case)
 
+# Annotate cryptic exon dataset with this new information about cryptic sites
 STAR_crypt.res$upstream.case.canonical.start <- STAR_upstream_results_case$canonical.start[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_case))]
 STAR_crypt.res$upstream.case.cryptic.5prime <- STAR_upstream_results_case$cryptic.5prime[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_case))]
 STAR_crypt.res$upstream.case.strand <- STAR_upstream_results_case$upstream.strand[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_case))]
@@ -408,10 +431,9 @@ head(STAR_crypt.res)
 STAR_crypt.res$upstream.case.mean.SJ <- STAR_upstream_results_case$upstream.unique.count[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_case))]
 STAR_crypt.res$upstream.case.mean.SJ <- STAR_crypt.res$upstream.case.mean.SJ / length(STAR_case_SJ_list)
 
-# downstream junctions in cases
+# Discovering 3' EXACT cryptic exon sites in case
 # need to find the counts of canonical junctions that were assigned by canonical_junction_detector in the case dataset.
-#This function assumes that the results file has been appended with the canonical start and end coordinates at positions ??? and ??? respectively.
-
+#This function assumes that the results file has been appended with the canonical start and end coordinates at positions XXX and YYY respectively.
 STAR_downstream_results_case <- bridging_junction_finder(SJ.summary = STAR_case_total_SJ_counts, 
                                                     results.df = STAR_crypt.res, 
                                                     query.type = "downstream")
@@ -419,6 +441,8 @@ head(STAR_downstream_results_case)
 head(downstream_results_case)
 head(STAR_crypt.res)
 
+
+# Annotate cryptic exon dataset with this new information about cryptic sites			  
 STAR_crypt.res$downstream.case.cryptic.3prime <- STAR_downstream_results_case$cryptic.3prime[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_case))]
 STAR_crypt.res$downstream.case.canonical.end <- STAR_downstream_results_case$canonical.end[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_case))]
 STAR_crypt.res$downstream.case.strand <- STAR_downstream_results_case$downstream.strand[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_case))]
@@ -433,11 +457,8 @@ STAR_crypt.res$downstream.case.mean.SJ <- STAR_crypt.res$downstream.case.mean.SJ
 # convert all NAs to zeros
 ncol(STAR_crypt.res)
 head(STAR_crypt.res)
-
 STAR_crypt.res[is.na(STAR_crypt.res)] <- "0"
-
 head(STAR_crypt.res[,c(20,25,30,31,36,41)])
-
 STAR_crypt.res[,c(20,25,30,31,36,41)] <- as.numeric(unlist(STAR_crypt.res[,c(20,25,30,31,36,41)]))
 
 # calculate ratios
@@ -452,6 +473,8 @@ nrow(STAR_crypt.res)
 ncol(STAR_crypt.res)
 head(crypt.res)
 head(STAR_fixed.gene.names)
+				  
+# Annotate cryptic exons with gene names
 STAR_fixed.gene.names <- fix.gene.names(STAR_crypt.res,"mouse_annotation_infos_biomart.txt")
 STAR_crypt.res$fix.gene.names <- as.character(STAR_fixed.gene.names$fixed.gene.id[match(row.names(STAR_crypt.res),row.names(STAR_fixed.gene.names))])
 STAR_crypt.res$fix.gene.names <- ifelse(test = is.na(STAR_crypt.res$fix.gene.names),yes = STAR_crypt.res$external_gene_id,no = STAR_crypt.res$fix.gene.names)
@@ -460,12 +483,14 @@ STAR_crypt.res$fix.strand <- as.character(STAR_fixed.gene.names$fixed.strand[mat
 STAR_crypt.res$fix.strand <- ifelse(test=is.na(STAR_crypt.res$fix.strand),yes=STAR_crypt.res$strand,no=as.character(STAR_crypt.res$fix.strand))
 STAR_crypt.res <- subset(STAR_crypt.res, !is.na(STAR_crypt.res$fix.gene.names))
 
+# Calculating upstream delta psi
 STAR_crypt.res$upstream_delta_psi <- ifelse(STAR_crypt.res$fix.strand == "+",
                                        yes = (STAR_crypt.res$upstream.case.mean.SJ / (STAR_crypt.res$upstream.case.mean.SJ + STAR_crypt.res$canonical.case.mean.SJ) )  - (STAR_crypt.res$upstream.control.mean.SJ / (STAR_crypt.res$upstream.control.mean.SJ + STAR_crypt.res$canonical.control.mean.SJ) ),
                                        no = (STAR_crypt.res$downstream.case.mean.SJ / (STAR_crypt.res$downstream.case.mean.SJ + STAR_crypt.res$canonical.case.mean.SJ) ) - (STAR_crypt.res$downstream.control.mean.SJ / (STAR_crypt.res$downstream.control.mean.SJ + STAR_crypt.res$canonical.control.mean.SJ) ) )
 
 head(STAR_crypt.res)
 
+# Calculating downstream delta psi
 STAR_crypt.res$downstream_delta_psi <- ifelse(STAR_crypt.res$fix.strand == "+",
                                          yes = (STAR_crypt.res$downstream.case.mean.SJ / (STAR_crypt.res$downstream.case.mean.SJ + STAR_crypt.res$canonical.case.mean.SJ) ) - (STAR_crypt.res$downstream.control.mean.SJ / (STAR_crypt.res$downstream.control.mean.SJ + STAR_crypt.res$canonical.control.mean.SJ) ), 
                                          no =  (STAR_crypt.res$upstream.case.mean.SJ / (STAR_crypt.res$upstream.case.mean.SJ + STAR_crypt.res$canonical.case.mean.SJ) )  - (STAR_crypt.res$upstream.control.mean.SJ / (STAR_crypt.res$upstream.control.mean.SJ + STAR_crypt.res$canonical.control.mean.SJ) ) )
