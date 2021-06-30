@@ -1,1 +1,6 @@
-![image](https://user-images.githubusercontent.com/68455070/123910182-af162b00-d9ac-11eb-8cf8-9a3fb84b9089.png)
+# Identification of cryptic tags from RNA-seq BAM files (subset to Nfasc gene)
+
+1. Extract spliced reads
+```bash
+samtools view -h -F 256 ../nfascTrue/ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' | samtools view -bh > ctrNfascReads_spliced.bam
+```
