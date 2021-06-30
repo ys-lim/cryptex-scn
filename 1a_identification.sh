@@ -50,6 +50,7 @@ bedtools intersect -a cko2_spliced_reads.bam -b ../../Mus_musculus.GRCm38.94.dex
 bedtools intersect -a cko3_spliced_reads.bam -b ../../Mus_musculus.GRCm38.94.dexseq.exons.only.gtf > cko3_spliced_exons.bam
 
 ## PURPOSE: Convert bam to bed file
+# -split allows RNA-seq reads to be split based on N in CIGAR, that is, one read spanning an intronic region will be split into two distinct bed intervals
 bedtools bamtobed -i ctr1_spliced_exons.bam -split | sort -k1,1 -k2,2n > ctr1_spliced_exons.bed
 
 bedtools bamtobed -i ctr2_spliced_exons.bam -split | sort -k1,1 -k2,2n > ctr2_spliced_exons.bed
