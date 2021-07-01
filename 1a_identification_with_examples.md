@@ -17,7 +17,7 @@ python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm
 ```bash
 samtools view -h -F 256 ../nfascTrue/ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' | samtools view -bh > ctrNfascReads_spliced.bam
 ```
-### 3. Intersect spliced reads with exon gtf to extract spliced exonic reads
+### 3. Intersect spliced reads with flattened exon annotation gtf to extract spliced exonic reads
 ```bash
 bedtools intersect -a ctrNfascReads_spliced.bam -b Mus_musculus.GRCm38.94.dexseq.exons.only.gtf > ctrNfasc_spliced_exons.bam
 ```
@@ -111,7 +111,7 @@ done
 
 ![image](https://user-images.githubusercontent.com/68455070/124051815-c8bc7e80-da4f-11eb-977f-97e1453804e4.png)
 
-### 11. Convert cryptic tag bed file into cryptic tag gff for merging with annotated gff
+### 11. Convert cryptic tag bed file into cryptic tag gff for merging with annotated gtf
 
 ```bash
 cat cryptics_merged_annotated.bed | awk 'BEGIN{OFS="\t"}{split($6,a,"_");print $1, "Mus_musculus.GRCm38.94.gtf", "exonic_part", $2, $3, ".", $5, ".", "transcripts \"cryptic_exon\"; exonic_part_number \""a[2]"\"; gene_id \""a[1]"\"" }' | sort -k1,1 -k2,2n > cryptic_exons.gff
