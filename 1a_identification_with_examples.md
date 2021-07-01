@@ -4,9 +4,7 @@
 ```bash
 python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm38.94.dexseq.gtf
 ```
-<p align="center">
-    **Mus_musculus.GRCm38.94.gtf:**
-</p>
+**Mus_musculus.GRCm38.94.gtf:**
 
 ![image](https://user-images.githubusercontent.com/68455070/123911249-20a2a900-d9ae-11eb-920f-62bea91b9be8.png)
 
