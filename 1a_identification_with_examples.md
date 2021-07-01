@@ -40,6 +40,7 @@ bedtools bamtobed -i ctrNfasc_spliced_exons.bam -split | sort -k1,1 -k2,2n > ctr
 ```bash
 bedtools intersect -a ctrNfasc_spliced_exons.bed -b Mus_musculus.GRCm38.94.dexseq.exons.only.gtf -v > ctrNfasc_spliced_introns.bed
 ```
+This removes the exonic mapping region of a spliced read, leaving only the intronic mapping region. 
 
 `ctrNfasc_spliced_introns.bed`:
 
