@@ -13,10 +13,6 @@ python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm
 
 ![image](https://user-images.githubusercontent.com/68455070/123911122-f3ee9180-d9ad-11eb-9bf4-a5635b0e532f.png)
 
-<p align="center">
-    Mus_musculus.GRCm38.94.dexseq.gtf:
-</p>
-
 ### 2. Extract spliced reads (reads with N in CIGAR)
 ```bash
 samtools view -h -F 256 ../nfascTrue/ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' | samtools view -bh > ctrNfascReads_spliced.bam
@@ -25,9 +21,8 @@ samtools view -h -F 256 ../nfascTrue/ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' 
 ```bash
 bedtools intersect -a ctrNfascReads_spliced.bam -b Mus_musculus.GRCm38.94.dexseq.exons.only.gtf > ctrNfasc_spliced_exons.bam
 ```
-<p align="center">
-    ctrNfasc_spliced_exons.bam:
-</p>
+
+`ctrNfasc_spliced_exons.bam`:
 
 ![image](https://user-images.githubusercontent.com/68455070/123912024-1c2ac000-d9af-11eb-8f0f-863f3e1ce091.png)
 
@@ -35,9 +30,8 @@ bedtools intersect -a ctrNfascReads_spliced.bam -b Mus_musculus.GRCm38.94.dexseq
 ```bash
 bedtools bamtobed -i ctrNfasc_spliced_exons.bam -split | sort -k1,1 -k2,2n > ctrNfasc_spliced_exons.bed
 ```
-<p align="center">
-    ctrNfasc_spliced_exons.bed:
-</p>
+
+`ctrNfasc_spliced_exons.bed`:
 
 ![image](https://user-images.githubusercontent.com/68455070/123912145-3f556f80-d9af-11eb-89a2-ab3e9ce69dfd.png)
 
@@ -45,9 +39,8 @@ bedtools bamtobed -i ctrNfasc_spliced_exons.bam -split | sort -k1,1 -k2,2n > ctr
 ```bash
 bedtools intersect -a ctrNfasc_spliced_exons.bed -b Mus_musculus.GRCm38.94.dexseq.exons.only.gtf -v > ctrNfasc_spliced_introns.bed
 ```
-<p align="center">
-    ctrNfasc_spliced_introns.bed:
-</p>
+
+`ctrNfasc_spliced_introns.bed`:
 
 ![image](https://user-images.githubusercontent.com/68455070/123913513-e25ab900-d9b0-11eb-94e4-abb608a704ca.png)
 
@@ -55,9 +48,9 @@ bedtools intersect -a ctrNfasc_spliced_exons.bed -b Mus_musculus.GRCm38.94.dexse
 ```bash
 cat ctrNfasc_spliced_introns.bed ckoNfasc_spliced_introns.bed | sort -S 50% -k1,1 -k2,2n > grouped_spliced_introns_sorted.bed
 ```
-<p align="center">
-    grouped_spliced_introns_sorted.bed:
-</p>
+
+`grouped_spliced_introns_sorted.bed`:
+
 
 ![image](https://user-images.githubusercontent.com/68455070/123913700-19c96580-d9b1-11eb-8158-b5bbc7d04c3b.png)
 
@@ -65,9 +58,8 @@ cat ctrNfasc_spliced_introns.bed ckoNfasc_spliced_introns.bed | sort -S 50% -k1,
 ```bash
 bedtools merge -i grouped_spliced_introns_sorted.bed -d 500 -c 1 -o count > spliced_introns_merged.bed
 ```
-<p align="center">
-    spliced_introns_merged.bed:
-</p>
+
+`spliced_introns_merged.bed`:
 
 ![image](https://user-images.githubusercontent.com/68455070/123913868-4ed5b800-d9b1-11eb-842f-df577c0485d8.png)
 
@@ -79,21 +71,20 @@ bedtools intersect -a spliced_introns_merged.bed -b ../Mus_musculus.GRCm38.94.de
 
 This prevents cryptic tags that span across an exon of less than 500bp to be wrongly merged together. The intron gtf contains intervals of introns between exonic regions.
 
-<p align="center">
-    Mus_musculus.GRCm38.94.dexseq.introns.only.bed:
-</p>
+
+`Mus_musculus.GRCm38.94.dexseq.introns.only.bed`:
+
 
 ![image](https://user-images.githubusercontent.com/68455070/123914012-7fb5ed00-d9b1-11eb-8bec-4b1259afaf3b.png)
 
-<p align="center">
-    bedtools intersect -a spliced_introns_merged.bed -b ../Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb
-</p>
+
+`bedtools intersect -a spliced_introns_merged.bed -b ../Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb`:
+
 
 ![image](https://user-images.githubusercontent.com/68455070/124051609-606d9d00-da4f-11eb-8328-c33841f6f867.png)
 
-<p align="center">
-    cryptics_merged.bed:
-</p>
+
+`cryptics_merged.bed`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124051495-2e5c3b00-da4f-11eb-9190-7e628ff2fd4c.png)
 
@@ -103,9 +94,7 @@ This prevents cryptic tags that span across an exon of less than 500bp to be wro
 cat cryptics_merged.bed | awk '{print $6}' | sort -V | uniq > unique_gene_introns.tab
 ```
 
-<p align="center">
-    unique_gene_introns.tab:
-</p>
+`unique_gene_introns.tab`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124051714-9874e000-da4f-11eb-9592-b5efca253f2a.png)
 
@@ -117,12 +106,10 @@ for entry in `cat unique_gene_introns.tab`; do
 grep $entry cryptics_merged.bed | awk 'BEGIN{s=1}{print $0"i"s;s+=1}' >> cryptics_merged_annotated.bed
 done
 ```
-<p align="center">
-    cryptics_merged_annotated.bed:
-</p>
+
+`cryptics_merged_annotated.bed`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124051815-c8bc7e80-da4f-11eb-977f-97e1453804e4.png)
-
 
 ### 11. Convert cryptic tag bed file into cryptic tag gff for merging with annotated gff
 
@@ -130,9 +117,7 @@ done
 cat cryptics_merged_annotated.bed | awk 'BEGIN{OFS="\t"}{split($6,a,"_");print $1, "Mus_musculus.GRCm38.94.gtf", "exonic_part", $2, $3, ".", $5, ".", "transcripts \"cryptic_exon\"; exonic_part_number \""a[2]"\"; gene_id \""a[1]"\"" }' | sort -k1,1 -k2,2n > cryptic_exons.gff
 ```
 
-<p align="center">
-    cryptic_exons.gff:
-</p>
+`cryptic_exons.gff`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124051920-fb667700-da4f-11eb-8a86-b2a77f13d531.png)
 
@@ -141,9 +126,8 @@ cat cryptics_merged_annotated.bed | awk 'BEGIN{OFS="\t"}{split($6,a,"_");print $
 ```bash
 cat cryptic_exons.gff Mus_musculus.GRCm38.94.dexseq.gtf | sort -k1,1V -k4,4n -k5,5n | awk '$14 ~ /ENS/' > all_exons_and_cryptics.gff
 ```
-<p align="center">
-    all_exons_and_cryptics.gff:
-</p>
+
+`all_exons_and_cryptics.gff`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124052087-50a28880-da50-11eb-8d88-fd67641b4fc3.png)
 
@@ -152,8 +136,7 @@ cat cryptic_exons.gff Mus_musculus.GRCm38.94.dexseq.gtf | sort -k1,1V -k4,4n -k5
 ```bash
 python dexseq_count.py -s reverse -p yes -r name -f bam all_exons_and_cryptics.gff ctr/ctr1_sorted.bam ctr/ctr1_pycount.txt &> ctr/ctr1_pycount_report.txt
 ```
-<p align="center">
-    ctr1_pycount.txt:
-</p>
+
+`ctr1_pycount.txt`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124052655-711f1280-da51-11eb-841b-c0f15a5cfa0a.png)
