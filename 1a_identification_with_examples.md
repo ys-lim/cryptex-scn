@@ -123,7 +123,7 @@ cat cryptics_merged_annotated.bed | awk 'BEGIN{OFS="\t"}{split($6,a,"_");print $
 
 ![image](https://user-images.githubusercontent.com/68455070/124051920-fb667700-da4f-11eb-8a86-b2a77f13d531.png)
 
-### 12. Concatenate cryptic exons within annotated exon gff & sort - all_exons_and_cryptics.gff forms the annotation for subsequent cryptic tag hunting
+### 12. Concatenate cryptic exons within annotated exon gff & sort - all_exons_and_cryptics.gff forms the annotation for subsequent cryptic exon hunting
 
 ```bash
 cat cryptic_exons.gff Mus_musculus.GRCm38.94.dexseq.gtf | sort -k1,1V -k4,4n -k5,5n | awk '$14 ~ /ENS/' > all_exons_and_cryptics.gff
