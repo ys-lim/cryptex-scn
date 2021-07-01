@@ -30,6 +30,7 @@ bedtools intersect -a ctrNfascReads_spliced.bam -b Mus_musculus.GRCm38.94.dexseq
 ```bash
 bedtools bamtobed -i ctrNfasc_spliced_exons.bam -split | sort -k1,1 -k2,2n > ctrNfasc_spliced_exons.bed
 ```
+`-split` allows RNA-seq reads to be split based on N in CIGAR, that is, one read spanning an intronic region will be split into two distinct bed intervals.
 
 `ctrNfasc_spliced_exons.bed`:
 
