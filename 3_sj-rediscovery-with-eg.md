@@ -28,9 +28,6 @@ STAR_canonical_results_control <- canonical_junction_detector(SJ.summary = STAR_
                                                          results.df = STAR_crypt.res,
                                                          mode = "discovery")
 ```
-`STAR_canonical_results_control`:
-
-![image](https://user-images.githubusercontent.com/68455070/124410451-0f2a1a00-dd7d-11eb-89fa-76b0cfcc0a5e.png)
 
 Breakdown of large function:
 `canonical_junction_detector` function: 
@@ -67,6 +64,11 @@ canonical_junction_query <- function(CE.chr,CE.start,CE.end, SJ.GRange){ # itera
         return(junction)
 }
 ```
+
+`STAR_canonical_results_control`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410451-0f2a1a00-dd7d-11eb-89fa-76b0cfcc0a5e.png)
+
 `STAR_crypt.res[10:12]`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124412342-dbe98a00-dd80-11eb-8d84-3663c0f5e552.png)
