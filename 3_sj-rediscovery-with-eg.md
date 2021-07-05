@@ -65,7 +65,7 @@ canonical_junction_query <- function(CE.chr,CE.start,CE.end, SJ.GRange){ # itera
 }
 ```
 
-`STAR_canonical_results_control`:
+Output `STAR_canonical_results_control`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124410451-0f2a1a00-dd7d-11eb-89fa-76b0cfcc0a5e.png)
 
