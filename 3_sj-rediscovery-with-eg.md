@@ -1,4 +1,4 @@
-### 1. Merge SJ.out.tab files
+### 1. Merge SJ.out.tab files for controls
 ```r
 STAR_control_SJ_list <- c("ctr1.SJ.out.tab","ctr2.SJ.out.tab","ctr3.SJ.out.tab") 
 STAR_control_total_SJ_counts <- merge.SJ.files(STAR_control_SJ_list)
@@ -68,5 +68,26 @@ STAR_crypt.res$downstream.control.mean.SJ <- STAR_crypt.res$downstream.control.m
 ```
 `STAR_crypt.res`:
 
-Once Controls are done, we move on to Case.
+Once Controls are done, we move on to cKO.
 
+### 1. Merge SJ.out.tab files for cKO
+```r
+STAR_case_SJ_list <- c("cKO1.SJ.out.tab","cKO2.SJ.out.tab","cKO3.SJ.out.tab") 
+STAR_case_total_SJ_counts <- merge.SJ.files(STAR_case_SJ_list)
+```
+`STAR_case_total_SJ_counts`:
+
+STAR_crypt.res is now augmented with the coordinates discovered previously for the canonical sites. The subsequent function looks for canonical junctions in the case dataset that exactly match those discovered in the control dataset. Why do we need to do this? --> Because we want to find the SJ splicing from the canonical splice sites into the cryptic tag region.
+
+### 2. Match canonical junctions between case and controls
+```r
+# We want to find junctions in the merged SJ summary file that matches exactly the canonical splice junctions discovered earlier in Controls analysis
+STAR_canonical_results_case <- canonical_junction_detector(SJ.summary = STAR_case_total_SJ_counts, 
+                                                      results.df = STAR_crypt.res, 
+                                                      mode = "replication")
+```
+`STAR_canonical_results_case`:
+### 3. Repeat the same upstream and downstream cryptic splice site discovery for cKO (as performed on controls)
+
+## Resultant SJ rediscovery output file
+`splicing_analysis.xlsx`:
