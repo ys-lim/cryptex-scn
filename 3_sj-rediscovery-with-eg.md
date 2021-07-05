@@ -4,7 +4,11 @@ STAR_control_SJ_list <- c("ctr1.SJ.out.tab","ctr2.SJ.out.tab","ctr3.SJ.out.tab")
 STAR_control_total_SJ_counts <- merge.SJ.files(STAR_control_SJ_list)
 ```
 `STAR_control_SJ_list`:
+![image](https://user-images.githubusercontent.com/68455070/124410094-4815bf00-dd7c-11eb-9aff-b4cda71f0cc8.png)
+
 `STAR_control_total_SJ_counts`:
+![image](https://user-images.githubusercontent.com/68455070/124410070-3502ef00-dd7c-11eb-9949-7922b61618c8.png)
+
 ### 2. Load in dexseq results containing cryptic tag information
 ```r
 STAR_dexseq.res <- "24may_scn_SignificantExons_STAR.csv"
