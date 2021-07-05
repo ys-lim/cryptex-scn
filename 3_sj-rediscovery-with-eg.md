@@ -32,6 +32,57 @@ STAR_canonical_results_control <- canonical_junction_detector(SJ.summary = STAR_
 
 ![image](https://user-images.githubusercontent.com/68455070/124410451-0f2a1a00-dd7d-11eb-89fa-76b0cfcc0a5e.png)
 
+Breakdown of large function:
+`canonical_junction_detector` function: 
+```r
+canonical_junction_detector <- function(SJ.summary,results.df,mode="discovery"){
+	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T) # convert the combined SJ file into a GRanges obj
+	if(mode == "discovery"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_query(x[10],x[11],x[12], GRanges_object)) # this is for control
+		}
+	if(mode == "replication"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_replication(x[10],x[15],x[16], GRanges_object)) # this is for case
+	}
+	#output is a list of GRange objects - unuseable.
+	junctions.list <- unlist(GRangesList(junctions.list)) # list of canonical junctions in results.df, referenced from SJ.summary GRanges obj
+	#convert into a dataframe, extracting the relevent information from the GRanges object.
+	#names(GRanges) is a vector of rownames, confusingly.
+	canonical.df <- data.frame(row.names=names(junctions.list),
+			canonical.chr=seqnames(junctions.list),
+			canonical.start=start(junctions.list),
+			canonical.end=end(junctions.list),
+			canonical.unique.count = score(junctions.list),
+			canonical.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	return(canonical.df)
+}
+```
+`canonical_junction_query` function: 
+```r
+# this function below allows you to specify which GRange object to query
+# this function outputs the canonical junction flanking the cryptic tag (since there could be multiple)
+canonical_junction_query <- function(CE.chr,CE.start,CE.end, SJ.GRange){ # iterate each SJ through the GRanges of SJs
+        junction <- SJ.GRange[seqnames(SJ.GRange)==CE.chr & start(SJ.GRange) <= as.numeric(CE.start)+1 & end(SJ.GRange) >= as.numeric(CE.end)-1] # obtain that particular SJ
+        junction <- head(junction[order(score(junction),decreasing=T)],1) # we only want the most abundantly supported SJ
+        return(junction)
+}
+```
+`STAR_crypt.res[10:12]`:
+
+![image](https://user-images.githubusercontent.com/68455070/124412342-dbe98a00-dd80-11eb-8d84-3663c0f5e552.png)
+
+`GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T)`:
+
+![image](https://user-images.githubusercontent.com/68455070/124412538-55817800-dd81-11eb-9c14-bcf2548c7835.png)
+
+`junction <- SJ.GRange[seqnames(SJ.GRange)==CE.chr & start(SJ.GRange) <= as.numeric(CE.start)+1 & end(SJ.GRange) >= as.numeric(CE.end)-1]`:
+
+![image](https://user-images.githubusercontent.com/68455070/124412897-1d2e6980-dd82-11eb-878a-5fe680469224.png)
+
+`junction <- head(junction[order(score(junction),decreasing=T)],1)`:
+
+![image](https://user-images.githubusercontent.com/68455070/124412992-4c44db00-dd82-11eb-99c7-80b51e159f58.png)
+
 ### 4. Add the CANONICAL splice site coordinates to the cryptic tag results
 ```r
 STAR_crypt.res$canonical.chr <- STAR_canonical_results_control$canonical.chr[match(rownames(STAR_crypt.res),rownames(STAR_canonical_results_control))]
