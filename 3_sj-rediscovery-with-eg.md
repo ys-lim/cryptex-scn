@@ -18,8 +18,10 @@ STAR_crypt.res <- as.data.frame(fread(STAR_dexseq.res))
 # obtaining cryptic exons with FDR < 0.05
 STAR_crypt.res <- subset(STAR_crypt.res,grepl("i",exonID) & FDR < 0.05)
 ```
-`24may_scn_SignificantExons_STAR.csv`:
 `STAR_crypt.res`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410229-99be4980-dd7c-11eb-94e9-3a4827593edc.png)
+
 ### 3. Finding canonical junctions flanking each cryptic tag
 ```r
 STAR_canonical_results_control <- canonical_junction_detector(SJ.summary = STAR_control_total_SJ_counts, 
@@ -27,6 +29,9 @@ STAR_canonical_results_control <- canonical_junction_detector(SJ.summary = STAR_
                                                          mode = "discovery")
 ```
 `STAR_canonical_results_control`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410451-0f2a1a00-dd7d-11eb-89fa-76b0cfcc0a5e.png)
+
 ### 4. Add the CANONICAL splice site coordinates to the cryptic tag results
 ```r
 STAR_crypt.res$canonical.chr <- STAR_canonical_results_control$canonical.chr[match(rownames(STAR_crypt.res),rownames(STAR_canonical_results_control))]
@@ -38,6 +43,9 @@ STAR_crypt.res$canonical.control.mean.SJ <- STAR_canonical_results_control$canon
 STAR_crypt.res$canonical.control.mean.SJ <- STAR_crypt.res$canonical.control.mean.SJ / length(STAR_control_SJ_list)
 ```
 `STAR_crypt.res`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410559-56180f80-dd7d-11eb-85f2-c5474aced706.png)
+
 ### 5. Counting (5') upstream cryptic junctions in controls
 ```r
 STAR_upstream_results_control <- bridging_junction_finder(SJ.summary = STAR_control_total_SJ_counts,
@@ -45,6 +53,9 @@ STAR_upstream_results_control <- bridging_junction_finder(SJ.summary = STAR_cont
                                                      query.type = "upstream")
 ```
 `STAR_upstream_results_control`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410585-64fec200-dd7d-11eb-8cb5-54b877b4c346.png)
+
 ### 6. Add the (5') upstream cryptic junctions coordinates to cryptic tag dataframe
 ```r
 STAR_crypt.res$upstream.control.canonical.start <- STAR_upstream_results_control$canonical.start[match(rownames(STAR_crypt.res),rownames(STAR_upstream_results_control))]
@@ -55,6 +66,9 @@ STAR_crypt.res$upstream.control.mean.SJ <- STAR_upstream_results_control$upstrea
 STAR_crypt.res$upstream.control.mean.SJ <- STAR_crypt.res$upstream.control.mean.SJ / length(STAR_control_SJ_list)
 ```
 `STAR_crypt.res`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410724-a8f1c700-dd7d-11eb-9dd0-5bd1d76a7d6e.png)
+
 ### 7. Counting (3') downstream cryptic junctions in cKO
 ```r
 STAR_downstream_results_control <- bridging_junction_finder(SJ.summary = STAR_control_total_SJ_counts, 
@@ -62,7 +76,9 @@ STAR_downstream_results_control <- bridging_junction_finder(SJ.summary = STAR_co
                                                        query.type = "downstream")
 ```
 `STAR_downstream_results_control`: 
-`STAR_crypt.res`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410753-b73fe300-dd7d-11eb-9550-00c2009ec9cb.png)
+
 ### 8. Add the (3') downstream cryptic junctions coordinates to cryptic tag dataframe
 ```r
 STAR_crypt.res$downstream.control.cryptic.3prime <- STAR_downstream_results_control$cryptic.3prime[match(rownames(STAR_crypt.res),rownames(STAR_downstream_results_control))]
@@ -74,6 +90,8 @@ STAR_crypt.res$downstream.control.mean.SJ <- STAR_crypt.res$downstream.control.m
 ```
 `STAR_crypt.res`:
 
+![image](https://user-images.githubusercontent.com/68455070/124410840-d9396580-dd7d-11eb-867a-7cd5d2e410d0.png)
+
 Once Controls are done, we move on to cKO.
 
 ### 1. Merge SJ.out.tab files for cKO
@@ -82,6 +100,8 @@ STAR_case_SJ_list <- c("cKO1.SJ.out.tab","cKO2.SJ.out.tab","cKO3.SJ.out.tab")
 STAR_case_total_SJ_counts <- merge.SJ.files(STAR_case_SJ_list)
 ```
 `STAR_case_total_SJ_counts`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410859-e5252780-dd7d-11eb-8299-d0e5c0112a32.png)
 
 STAR_crypt.res is now augmented with the coordinates discovered previously for the canonical sites. The subsequent function looks for canonical junctions in the case dataset that exactly match those discovered in the control dataset. Why do we need to do this? --> Because we want to find the SJ splicing from the canonical splice sites into the cryptic tag region.
 
@@ -93,7 +113,27 @@ STAR_canonical_results_case <- canonical_junction_detector(SJ.summary = STAR_cas
                                                       mode = "replication")
 ```
 `STAR_canonical_results_case`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410893-f2421680-dd7d-11eb-99ef-78c159894f01.png)
+
 ### 3. Repeat the same upstream and downstream cryptic splice site discovery for cKO (as performed on controls)
 
 ## Resultant SJ rediscovery output file
 `splicing_analysis.xlsx`:
+
+![image](https://user-images.githubusercontent.com/68455070/124410951-1271d580-dd7e-11eb-912b-90010f8a326b.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124410983-24ec0f00-dd7e-11eb-8405-cce99e4711f1.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124411030-3e8d5680-dd7e-11eb-8432-2cf93726bda5.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124411815-d3448400-dd7f-11eb-9890-e51e8663234c.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124411848-e5262700-dd7f-11eb-8b8c-cf35424d8548.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124411870-f2431600-dd7f-11eb-9691-5677c08d8238.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124411897-ff600500-dd7f-11eb-8ee5-2b93ff7c1efa.png)
+
+![image](https://user-images.githubusercontent.com/68455070/124411924-0b4bc700-dd80-11eb-881a-15fa48f35322.png)
+
