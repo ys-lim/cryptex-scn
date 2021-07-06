@@ -142,6 +142,8 @@ cat cryptic_exons.gff Mus_musculus.GRCm38.94.dexseq.gtf | sort -k1,1V -k4,4n -k5
 
 ![image](https://user-images.githubusercontent.com/68455070/124052087-50a28880-da50-11eb-8d88-fd67641b4fc3.png)
 
+Each entry labelled `cryptic_exon` is a cryptic tag bin, which allows intronic-mapping reads to map to during subsequent read counting.
+
 ### 13. Read counting for samples (STAR) using actual all_exons_and_cryptics.gff and dexseq
 
 ```bash
