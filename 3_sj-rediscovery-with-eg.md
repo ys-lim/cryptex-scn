@@ -133,7 +133,7 @@ STAR_crypt.res$canonical.control.mean.SJ <- STAR_crypt.res$canonical.control.mea
 
 ![image](https://user-images.githubusercontent.com/68455070/124410559-56180f80-dd7d-11eb-85f2-c5474aced706.png)
 
-### 5. Counting (5') upstream cryptic junctions in controls
+### 5. Discover (5') upstream cryptic junctions in controls
 ```r
 STAR_upstream_results_control <- bridging_junction_finder(SJ.summary = STAR_control_total_SJ_counts,
                                                      results.df = STAR_crypt.res,
