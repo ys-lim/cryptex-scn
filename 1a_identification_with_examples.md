@@ -23,7 +23,7 @@ The flattened exon annotation file is created simply by `grep`-ing the `exonic_p
 
 ### 2. Extract spliced reads (reads with N in CIGAR)
 ```bash
-samtools view -h -F 256 ../nfascTrue/ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' | samtools view -bh > ctrNfascReads_spliced.bam
+samtools view -h -F 256 ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' | samtools view -bh > ctrNfascReads_spliced.bam
 ```
 ### 3. Intersect spliced reads with flattened exon annotation gtf to extract spliced exonic reads
 ```bash
@@ -76,7 +76,7 @@ bedtools merge -i grouped_spliced_introns_sorted.bed -d 500 -c 1 -o count > spli
 ## 8. Intersect pre-cryptic tag with intron gtf
 
 ```bash
-bedtools intersect -a spliced_introns_merged.bed -b ../Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb | awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4,$8,$9}' | sort -k1,1V -k5,5n > cryptics_merged.bed
+bedtools intersect -a spliced_introns_merged.bed -b Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb | awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4,$8,$9}' | sort -k1,1V -k5,5n > cryptics_merged.bed
 ```
 
 This undos the effect of pre-cryptic tags that span across an exon of less than 500bp to be wrongly merged together. The intron gtf contains intervals of introns between exonic regions. We can conclude that a pre-cryptic tag that overlaps with two distinct intronic regions has been created via merging of two adjacent pre-cryptic tags across an exon (that is less than 500bp long).
@@ -88,7 +88,7 @@ This undos the effect of pre-cryptic tags that span across an exon of less than 
 ![image](https://user-images.githubusercontent.com/68455070/123914012-7fb5ed00-d9b1-11eb-8bec-4b1259afaf3b.png)
 
 
-`bedtools intersect -a spliced_introns_merged.bed -b ../Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb`:
+`bedtools intersect -a spliced_introns_merged.bed -b Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb`:
 
 
 ![image](https://user-images.githubusercontent.com/68455070/124051609-606d9d00-da4f-11eb-8328-c33841f6f867.png)
@@ -144,7 +144,7 @@ cat cryptic_exons.gff Mus_musculus.GRCm38.94.dexseq.gtf | sort -k1,1V -k4,4n -k5
 ### 13. Read counting for samples (STAR) using actual all_exons_and_cryptics.gff and dexseq
 
 ```bash
-python dexseq_count.py -s reverse -p yes -r name -f bam all_exons_and_cryptics.gff ctr/ctr1_sorted.bam ctr/ctr1_pycount.txt &> ctr/ctr1_pycount_report.txt
+python dexseq_count.py -s reverse -p yes -r name -f bam all_exons_and_cryptics.gff ctr1_sorted.bam ctr1_pycount.txt &> ctr1_pycount_report.txt
 ```
 
 `ctr1_pycount.txt`:
