@@ -1,5 +1,6 @@
 ## Splice junction rediscovery 
 Input: Cryptic tag
+
 Output: Exact splice junctions of cryptic exon
 
 ![image](https://user-images.githubusercontent.com/68455070/124528073-ddc35400-de39-11eb-95c8-43949a50863b.png)
