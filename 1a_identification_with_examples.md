@@ -87,6 +87,7 @@ This undos the effect of pre-cryptic tags that span across an exon of less than 
 
 ![image](https://user-images.githubusercontent.com/68455070/123914012-7fb5ed00-d9b1-11eb-8bec-4b1259afaf3b.png)
 
+Further breakdown of this step:
 
 `bedtools intersect -a spliced_introns_merged.bed -b Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb`:
 
