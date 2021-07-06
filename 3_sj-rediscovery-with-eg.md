@@ -156,7 +156,7 @@ STAR_crypt.res$upstream.control.mean.SJ <- STAR_crypt.res$upstream.control.mean.
 
 ![image](https://user-images.githubusercontent.com/68455070/124410724-a8f1c700-dd7d-11eb-9dd0-5bd1d76a7d6e.png)
 
-### 7. Counting (3') downstream cryptic junctions in cKO
+### 7. Discover (3') downstream cryptic junctions in controls
 ```r
 STAR_downstream_results_control <- bridging_junction_finder(SJ.summary = STAR_control_total_SJ_counts, 
                                                        results.df = STAR_crypt.res, 
