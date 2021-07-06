@@ -13,6 +13,14 @@ python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm
 
 ![image](https://user-images.githubusercontent.com/68455070/123911122-f3ee9180-d9ad-11eb-9bf4-a5635b0e532f.png)
 
+`Mus_musculus.GRCm38.94.dexseq.introns.gtf`:
+
+The flattened intron annotation file is created using a script written by Devon Ryan (https://github.com/ys-lim/cryptex-scn/blob/main/1b_dpryan.r). This script takes in a flattened annotation file and adds intronic bins between existing exonic parts. 
+
+![image](https://user-images.githubusercontent.com/68455070/124526503-a18df480-de35-11eb-8625-b22aa6027249.png)
+
+The flattened exon annotation file is created simply by `grep`-ing the `exonic_part` entries from the total flattened annotation file (containing both exonic and intronic region). Likewise, the flattened intron annotation file is created by `grep`-ing the `intronic_part` entries from the total annotation file. 
+
 ### 2. Extract spliced reads (reads with N in CIGAR)
 ```bash
 samtools view -h -F 256 ../nfascTrue/ctrNfascReads.bam | awk '$1~/@/ || $6~/N/' | samtools view -bh > ctrNfascReads_spliced.bam
