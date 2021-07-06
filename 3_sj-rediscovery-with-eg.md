@@ -1,3 +1,9 @@
+## Splice junction rediscovery 
+Input: Cryptic tag
+Output: Exact splice junctions of cryptic exon
+
+![image](https://user-images.githubusercontent.com/68455070/124528073-ddc35400-de39-11eb-95c8-43949a50863b.png)
+
 ### 1. Merge SJ.out.tab files for controls
 ```r
 STAR_control_SJ_list <- c("ctr1.SJ.out.tab","ctr2.SJ.out.tab","ctr3.SJ.out.tab") 
