@@ -199,13 +199,41 @@ STAR_canonical_results_case <- canonical_junction_detector(SJ.summary = STAR_cas
                                                       results.df = STAR_crypt.res, 
                                                       mode = "replication")
 ```
+
+We see that in the `canonical_junction_detector` function, the option of `mode = "replication"`. In the actual `canonical_junction_detector` function: 
+```r
+canonical_junction_detector <- function(SJ.summary,results.df,mode="discovery"){
+	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T) # convert the combined SJ file into a GRanges obj
+	if(mode == "discovery"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_query(x[10],x[11],x[12], GRanges_object)) # this is for control
+		}
+	if(mode == "replication"){
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) canonical_junction_replication(x[10],x[15],x[16], GRanges_object)) # this is for case
+	}
+	#output is a list of GRange objects - unuseable.
+	junctions.list <- unlist(GRangesList(junctions.list)) # list of canonical junctions in results.df, referenced from SJ.summary GRanges obj
+	#convert into a dataframe, extracting the relevent information from the GRanges object.
+	#names(GRanges) is a vector of rownames, confusingly.
+	canonical.df <- data.frame(row.names=names(junctions.list),
+			canonical.chr=seqnames(junctions.list),
+			canonical.start=start(junctions.list),
+			canonical.end=end(junctions.list),
+			canonical.unique.count = score(junctions.list),
+			canonical.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	return(canonical.df)
+}
+```
+
+The only difference between `discovery` mode and `replication` mode is that `discovery` mode is used for controls, when canonical splice junctions are being discovered. For `replication` mode, we simply want to match the canonical splice junctions already found in the controls, and recover them from the total splice junction files for cKO. The columns `x[10],x[11],x[12]` under the `replication` mode refer to `canonical_chr`, `canonical_start` and `canonical_end` respectively found earlier in controls. The code for `replication` is similar to the `discovery` scenario as mentioned above. 
+
 `STAR_canonical_results_case`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124410893-f2421680-dd7d-11eb-99ef-78c159894f01.png)
 
 ### 3. Repeat the same upstream and downstream cryptic splice site discovery for cKO (as performed on controls)
 
-## Resultant SJ rediscovery output file
+## Resultant splice junction rediscovery output file
 `splicing_analysis.xlsx`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124410951-1271d580-dd7e-11eb-912b-90010f8a326b.png)
