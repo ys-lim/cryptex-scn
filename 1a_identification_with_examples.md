@@ -1,5 +1,7 @@
 ## Identification of cryptic tags from RNA-seq BAM files
 
+![image](https://user-images.githubusercontent.com/68455070/124527969-9b9a1280-de39-11eb-9795-d1e5d8477586.png)
+
 ### 1. Prepare flattened exon and intron annotation file
 ```bash
 python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm38.94.dexseq.gtf
