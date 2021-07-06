@@ -13,7 +13,7 @@ python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm
 
 ![image](https://user-images.githubusercontent.com/68455070/123911122-f3ee9180-d9ad-11eb-9bf4-a5635b0e532f.png)
 
-`Mus_musculus.GRCm38.94.dexseq.introns.gtf`:
+`Mus_musculus.GRCm38.94.dexseq.exons.introns.gtf`:
 
 The flattened intron annotation file is created using a script written by Devon Ryan (https://github.com/ys-lim/cryptex-scn/blob/main/1b_dpryan.r). This script takes in a flattened annotation file and adds intronic bins between existing exonic parts. 
 
