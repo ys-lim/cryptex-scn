@@ -1,4 +1,4 @@
-## Identification of cryptic tags from RNA-seq BAM files (using Nfasc gene as example)
+## Identification of cryptic tags from RNA-seq BAM files
 
 ### 1. Prepare flattened exon and intron annotation file
 ```bash
