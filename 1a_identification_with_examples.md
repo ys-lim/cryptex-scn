@@ -153,3 +153,5 @@ python dexseq_count.py -s reverse -p yes -r name -f bam all_exons_and_cryptics.g
 `ctr1_pycount.txt`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124052655-711f1280-da51-11eb-841b-c0f15a5cfa0a.png)
+
+There will be 1 `pycount` file for each replicate. These count files will be used as input into DEXSeq for differential exon usage analysis.
