@@ -225,7 +225,7 @@ canonical_junction_detector <- function(SJ.summary,results.df,mode="discovery"){
 }
 ```
 
-The only difference between `discovery` mode and `replication` mode is that `discovery` mode is used for controls, when canonical splice junctions are being discovered. For `replication` mode, we simply want to match the canonical splice junctions already found in the controls, and recover them from the total splice junction files for cKO. The columns `x[10],x[11],x[12]` under the `replication` mode refer to `canonical_chr`, `canonical_start` and `canonical_end` respectively found earlier in controls. The code for `replication` is similar to the `discovery` scenario as mentioned above. 
+The only difference between `discovery` mode and `replication` mode is that `discovery` mode is used for controls, when canonical splice junctions are being discovered. For `replication` mode, we simply want to match the canonical splice junctions already found in the controls, and recover them from the total splice junction files for cKO. The columns `x[10],x[15],x[16]` under the `replication` mode refer to `canonical_chr`, `canonical_start` and `canonical_end` respectively found earlier in controls. The code for `canonical_junction_replication` is similar to the `canonical_junction_query` function as explained above. 
 
 `STAR_canonical_results_case`:
 
