@@ -2,7 +2,7 @@
 
 ![image](https://user-images.githubusercontent.com/68455070/124527969-9b9a1280-de39-11eb-9795-d1e5d8477586.png)
 
-### 1. Prepare flattened exon and intron annotation file
+### 1. Prepare flattened exon and intron annotation file using DEXSeq script
 ```bash
 python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm38.94.dexseq.gtf
 ```
@@ -15,9 +15,15 @@ python dexseq_prepare_annotation.py Mus_musculus.GRCm38.94.gtf Mus_musculus.GRCm
 
 ![image](https://user-images.githubusercontent.com/68455070/123911122-f3ee9180-d9ad-11eb-9bf4-a5635b0e532f.png)
 
+`dexseq_prepare_annotation.py` creates a flattened annotation file of gene models (from the DEXSeq paper): 
+
+![image](https://user-images.githubusercontent.com/68455070/124694333-a45f1700-df13-11eb-9e3b-9cbf2175ef1a.png)
+
+(Flattening of gene models: This (fictional) gene has three annotated transcripts involving three exons (light shading), one of which has alternative boundaries. We form counting bins (dark shaded boxes) from the exons as depicted; the exon of variable length gets split into two bins.)
+
 `Mus_musculus.GRCm38.94.dexseq.exons.introns.gtf`:
 
-The flattened intron annotation file is created using a script written by Devon Ryan (https://github.com/ys-lim/cryptex-scn/blob/main/1b_dpryan.r). This script takes in a flattened annotation file and adds intronic bins between existing exonic parts. 
+The flattened intron annotation file is created using a script written by Devon Ryan (https://github.com/ys-lim/cryptex-scn/blob/main/1b_dpryan.r). This script takes in a flattened annotation file (output after running `dexseq_prepare_annotation.py`) and adds intronic bins between existing exonic parts. 
 
 ![image](https://user-images.githubusercontent.com/68455070/124526503-a18df480-de35-11eb-8625-b22aa6027249.png)
 
