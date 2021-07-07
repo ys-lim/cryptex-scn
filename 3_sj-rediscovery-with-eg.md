@@ -139,7 +139,65 @@ STAR_upstream_results_control <- bridging_junction_finder(SJ.summary = STAR_cont
                                                      results.df = STAR_crypt.res,
                                                      query.type = "upstream")
 ```
-`STAR_upstream_results_control`:
+Function breakdown:
+```r
+bridging_junction_finder <- function(SJ.summary, results.df, query.type){
+	GRanges_object <-  makeGRangesFromDataFrame(SJ.summary,keep.extra.columns=T)
+	if(query.type == "downstream"){ # 3'
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) downstream_junction_query(x[10],x[11],x[12], x[16], GRanges_object))
+	}
+	if(query.type == "upstream"){ # 5'
+		junctions.list <- apply(results.df, MAR=1,FUN=function(x) upstream_junction_query(x[10],x[11],x[12], x[15], GRanges_object))
+	}
+	#output is a list of GRange objects - unuseable.
+	junctions.list <- unlist(GRangesList(junctions.list))
+	#convert into a dataframe, extracting the relevant information from the GRanges object.
+	if(query.type == "downstream"){
+		bridging_junctions.df <- data.frame(row.names=names(junctions.list),
+			chr=seqnames(junctions.list),
+			cryptic.3prime=start(junctions.list),
+			canonical.end=end(junctions.list),
+			downstream.unique.count = score(junctions.list),
+			downstream.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	}
+	if(query.type == "upstream"){
+		bridging_junctions.df <- data.frame(row.names=names(junctions.list),
+			chr=seqnames(junctions.list),
+			canonical.start=start(junctions.list),
+			cryptic.5prime=end(junctions.list),
+			upstream.unique.count = score(junctions.list),
+			upstream.strand = strand(junctions.list),
+			intron.motif = mcols(junctions.list)[3])
+	}
+	return(bridging_junctions.df)
+}
+```
+`GRanges_object`:
+
+![image](https://user-images.githubusercontent.com/68455070/124685141-40345700-df03-11eb-8a12-3c289be26dc5.png)
+
+`upstream_junction_query` helper function: 
+```r
+upstream_junction_query <- function(CE.chr,CE.start,CE.end,canonical.start,SJ.GRange){
+	junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) == as.numeric(canonical.start) & end(SJ.GRange) >= as.numeric(CE.start) - 1 & end(SJ.GRange) < as.numeric(CE.end)]
+	junction <- head(junction[order(score(junction),decreasing=T)],1)
+    return(junction)
+}
+```
+`junction <- SJ.GRange[seqnames(SJ.GRange) == CE.chr & start(SJ.GRange) == as.numeric(canonical.start) & end(SJ.GRange) >= as.numeric(CE.start) - 1 & end(SJ.GRange) < as.numeric(CE.end)]` (discovering 5' cryptic junctions; there may be more than one possible): 
+
+![image](https://user-images.githubusercontent.com/68455070/124686007-e9c81800-df04-11eb-996f-e73bb3985428.png)
+
+`junction <- head(junction[order(score(junction),decreasing=T)],1)` (in the case that there are more than 1 cryptic junctions found, get the most abundant supported cryptic junction. For this example, it should be the junction with a score of 57):
+
+![image](https://user-images.githubusercontent.com/68455070/124686173-33186780-df05-11eb-9460-30f9887249d8.png)
+
+Apply the above function to every row in the cryptic tag dataframe (i.e. for every cryptic tag): 
+
+![image](https://user-images.githubusercontent.com/68455070/124686554-f0a35a80-df05-11eb-871c-74e5bf1ad262.png)
+
+Convert result into a dataframe `STAR_upstream_results_control`:
 
 ![image](https://user-images.githubusercontent.com/68455070/124410585-64fec200-dd7d-11eb-8cb5-54b877b4c346.png)
 
