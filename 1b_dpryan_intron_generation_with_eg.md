@@ -1,6 +1,7 @@
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
 > head(gtf_test)
+
 GRanges object with 6 ranges and 7 metadata columns:
       seqnames          ranges strand |                       source           type     score     phase              gene_id
          <Rle>       <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
