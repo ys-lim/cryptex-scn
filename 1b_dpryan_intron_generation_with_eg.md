@@ -544,3 +544,94 @@ Get all but the first end of intronic region.
 [1] 108016718 108019250 108019788 108023078 108025616 108030857 108031110 108053203
 > ends <- ends[-1]
 ```
+
+Generate an IRanges object from the starts and ends of the intronic regions.
+```r
+> bounds <- IRanges(start=starts, end=ends)
+> bounds
+IRanges object with 8 ranges and 0 metadata columns:
+          start       end     width
+      <integer> <integer> <integer>
+  [1] 108016633 108016718        86
+  [2] 108016929 108019250      2322
+  [3] 108019405 108019788       384
+  [4] 108019919 108023078      3160
+  [5] 108023208 108025616      2409
+  [6] 108025775 108030857      5083
+  [7] 108031000 108031110       111
+  [8] 108031154 108053203     22050
+```
+
+Getting the strand information for all but the last exonic region.
+```r
+> strand(exons)[-1]
+factor-Rle of length 8 with 1 run
+  Lengths: 8
+  Values : -
+Levels(3): + - *
+> strand <- strand(exons)[-1]
+```
+
+Construct a new GRanges object, which holds all the **intronic** intervals sandwiched by the exonic intervals. By comparing `introns` to `exons` GRanges objects, we can see how the exonic regions are interspersed by intronic bins. 
+```r
+> introns <- GRanges(seqnames=seqname, ranges=bounds, strand=strand)
+> introns
+GRanges object with 8 ranges and 0 metadata columns:
+      seqnames              ranges strand
+         <Rle>           <IRanges>  <Rle>
+  [1]     chr3 108016633-108016718      -
+  [2]     chr3 108016929-108019250      -
+  [3]     chr3 108019405-108019788      -
+  [4]     chr3 108019919-108023078      -
+  [5]     chr3 108023208-108025616      -
+  [6]     chr3 108025775-108030857      -
+  [7]     chr3 108031000-108031110      -
+  [8]     chr3 108031154-108053203      -
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+> exons
+GRanges object with 9 ranges and 7 metadata columns:
+      seqnames              ranges strand |                       source        type     score     phase              gene_id          transcripts
+         <Rle>           <IRanges>  <Rle> |                     <factor>    <factor> <numeric> <integer>          <character>          <character>
+  [1]     chr3 108014596-108016632      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [2]     chr3 108016719-108016928      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [3]     chr3 108019251-108019404      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [4]     chr3 108019789-108019918      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [5]     chr3 108023079-108023207      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [6]     chr3 108025617-108025774      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [7]     chr3 108030858-108030999      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [8]     chr3 108031111-108031153      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+  [9]     chr3 108053204-108053462      - | dexseq_prepare_annotation.py exonic_part      <NA>      <NA> ENSMUSG00000000001.5 ENSMUST00000000001.5
+      exonic_part_number
+             <character>
+  [1]                001
+  [2]                002
+  [3]                003
+  [4]                004
+  [5]                005
+  [6]                006
+  [7]                007
+  [8]                008
+  [9]                009
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+```
+We now want to "annotate" the intronic bins with intron IDs (arbitrarily numbered 1, 2, 3, etc.)
+```r
+> sprintf("%03i", c(1:length(introns)))
+[1] "001" "002" "003" "004" "005" "006" "007" "008"
+> intron_ids <- sprintf("%03i", c(1:length(introns)))
+```
+
+To account for a special case where the intronic bin is 0 bp large (which can occur when 2 exons are consecutively next to each other), we get rid of the 0bp intronic bins. 
+```r
+> which(width(introns) <= 0)
+integer(0)
+> width(introns) <= 0
+[1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+> DISCARD <- which(width(introns) <= 0)
+if(length(DISCARD) > 0) { # if there are things to discard
+  introns <- introns[-DISCARD] # grabs all but the DISCARD elements and updates introns
+  intron_ids <- intron_ids[-DISCARD] # grabs all but the DISCARD id and updates intron_ids
+}
+```
