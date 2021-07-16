@@ -853,4 +853,74 @@ We sort/order the final GRanges output (containing both exonic and intronic bins
 Levels: aggregate_gene exonic_part intronic_part
 > start(grl_test$ENSMUSG00000000001.5)
  [1] 108014596 108014596 108016719 108019251 108019789 108023079 108025617 108030858 108031111 108053204
+> grl_test$ENSMUSG00000000001.5[order(start(grl_test$ENSMUSG00000000001.5), elementMetadata(grl_test$ENSMUSG00000000001.5)$type),]
+GRanges object with 10 ranges and 7 metadata columns:
+       seqnames              ranges strand |                       source           type     score     phase              gene_id
+          <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
+   [1]     chr3 108014596-108053462      - | dexseq_prepare_annotation.py aggregate_gene      <NA>      <NA> ENSMUSG00000000001.5
+   [2]     chr3 108014596-108016632      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [3]     chr3 108016719-108016928      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [4]     chr3 108019251-108019404      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [5]     chr3 108019789-108019918      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [6]     chr3 108023079-108023207      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [7]     chr3 108025617-108025774      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [8]     chr3 108030858-108030999      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+   [9]     chr3 108031111-108031153      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+  [10]     chr3 108053204-108053462      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA> ENSMUSG00000000001.5
+                transcripts exonic_part_number
+                <character>        <character>
+   [1]                 <NA>               <NA>
+   [2] ENSMUST00000000001.5                001
+   [3] ENSMUST00000000001.5                002
+   [4] ENSMUST00000000001.5                003
+   [5] ENSMUST00000000001.5                004
+   [6] ENSMUST00000000001.5                005
+   [7] ENSMUST00000000001.5                006
+   [8] ENSMUST00000000001.5                007
+   [9] ENSMUST00000000001.5                008
+  [10] ENSMUST00000000001.5                009
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+```
+
+The preceding `add_introns` function is applied to **all** the genes within the original GRangesList, with each gene being a GRanges object within the GRangesList. Once that is done, 
+
+```r
+# Original GRangesList
+> grl_test
+
+GRangesList object of length 2794:
+$ENSMUSG00000000001.5
+GRanges object with 10 ranges and 7 metadata columns:
+       seqnames              ranges strand |                       source           type     score     phase
+          <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>
+   [1]     chr3 108014596-108053462      - | dexseq_prepare_annotation.py aggregate_gene      <NA>      <NA>
+   [2]     chr3 108014596-108016632      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [3]     chr3 108016719-108016928      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [4]     chr3 108019251-108019404      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [5]     chr3 108019789-108019918      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [6]     chr3 108023079-108023207      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [7]     chr3 108025617-108025774      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [8]     chr3 108030858-108030999      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+   [9]     chr3 108031111-108031153      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+  [10]     chr3 108053204-108053462      - | dexseq_prepare_annotation.py    exonic_part      <NA>      <NA>
+                    gene_id          transcripts exonic_part_number
+                <character>          <character>        <character>
+   [1] ENSMUSG00000000001.5                 <NA>               <NA>
+   [2] ENSMUSG00000000001.5 ENSMUST00000000001.5                001
+   [3] ENSMUSG00000000001.5 ENSMUST00000000001.5                002
+   [4] ENSMUSG00000000001.5 ENSMUST00000000001.5                003
+   [5] ENSMUSG00000000001.5 ENSMUST00000000001.5                004
+   [6] ENSMUSG00000000001.5 ENSMUST00000000001.5                005
+   [7] ENSMUSG00000000001.5 ENSMUST00000000001.5                006
+   [8] ENSMUSG00000000001.5 ENSMUST00000000001.5                007
+   [9] ENSMUSG00000000001.5 ENSMUST00000000001.5                008
+  [10] ENSMUSG00000000001.5 ENSMUST00000000001.5                009
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+
+...
+<2793 more elements>
+# Result of applying with_introns function to each gene within the GRangesList
+>>>>>
 ```
