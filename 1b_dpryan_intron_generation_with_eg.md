@@ -5,8 +5,8 @@
 ### Table of Contents
 **[Step 1: Read in flattened GTF file and view metadata](#step-1-read-in-flattened-gtf-file-and-view-metadata)**<br>
 **[Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object](#step-2-manipulate-the-gtf-file-into-a-grangeslist-with-each-gene-as-a-granges-object)**<br>
-**[Step 3: Start to generate intronic bins within GTF file](#troubleshooting)**<br>
-**[Step 4: Generate a GTF file containing exonic and intronic bins](#compatibility)**<br>
+**[Step 3: Start to generate intronic bins within GTF file](#step-3-start-to-generate-intronic-bins-within-gtf-file)**<br>
+**[Step 4: Generate a GTF file containing exonic and intronic bins](#step-4-generate-a-gtf-file-containing-exonic-and-intronic-bins)**<br>
 
 ## Step 1: Read in flattened GTF file and view metadata
 ```r
