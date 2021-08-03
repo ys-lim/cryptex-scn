@@ -2,7 +2,7 @@
 
 ![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
 
-### Table of Contents
+### Steps
 **[Step 1: Read in flattened GTF file and view metadata](#step-1-read-in-flattened-gtf-file-and-view-metadata)**<br>
 **[Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object](#step-2-manipulate-the-gtf-file-into-a-grangeslist-with-each-gene-as-a-granges-object)**<br>
 **[Step 3: Start to generate intronic bins within GTF file](#step-3-start-to-generate-intronic-bins-within-gtf-file)**<br>
