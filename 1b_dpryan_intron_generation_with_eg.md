@@ -2,6 +2,12 @@
 
 ![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
 
+##### Table of Contents  
+[Step 1: Read in flattened GTF file and view metadata](#headers)  
+[Emphasis](#emphasis)  
+...snip...    
+<a name="headers"/>
+
 ## Step 1: Read in flattened GTF file and view metadata
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
@@ -321,7 +327,7 @@ GRanges object with 24904 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
-## Step 2: Make the gtf file into a GRangesList, with each gene as a GRanges object. 
+## Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object. 
 
 Within each gene, we have intervals of exons as GRanges ranges. 
 
