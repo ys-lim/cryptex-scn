@@ -2,15 +2,11 @@
 
 ![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
 
-### Steps
-[Step 1: Read in flattened GTF file and view metadata](#headers)
-[Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object](#step2)
-[Step 3: Start to generate intronic bins within GTF file](#step3)
-[Step 4: Generate a GTF file containing exonic and intronic bins](#step4)
-<a name="headers"/>
-<a name="step2"/>
-<a name="step3"/>
-<a name="step4"/>
+### Table of Contents
+**[Step 1: Read in flattened GTF file and view metadata](#installation-instructions)**<br>
+**[Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object](#usage-instructions)**<br>
+**[Step 3: Start to generate intronic bins within GTF file](#troubleshooting)**<br>
+**[Step 4: Generate a GTF file containing exonic and intronic bins](#compatibility)**<br>
 
 ## Step 1: Read in flattened GTF file and view metadata
 ```r
