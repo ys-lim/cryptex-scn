@@ -2,7 +2,7 @@
 
 ![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
 
-### Read in flattened GTF file and view metadata
+## Step 1: Read in flattened GTF file and view metadata
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
 
@@ -238,7 +238,7 @@ Format `exonic_part_number` and filter out NA values. View the filtered `exonic_
  [981] "001" "002" "003" "004" "005" "006" "007" "008" "009" "010" "011" "012" "001" "001" "002" "003" "004" "005" "006" "007"
  [ reached getOption("max.print") -- omitted 21110 entries ]
  ```
- Add `exonic_part_number` as a column in metadata.
+Change the `exonic_part_number` column to character data type.
 
 ```r
 > elementMetadata(gtf_test)$exonic_part_number <- as.character(elementMetadata(gtf_test)$exonic_part_number)
@@ -255,7 +255,7 @@ DataFrame with 6 rows and 7 columns
 5 dexseq_prepare_annotation.py aggregate_gene        NA        NA ENSMUSG00000103416.2                   NA                 NA
 6 dexseq_prepare_annotation.py    exonic_part        NA        NA ENSMUSG00000103416.2 ENSMUST00000191986.2                001
 ```
-Replace `exonic_part_number` column with filtered version.
+Replace `exonic_part_number` column with filtered version, without NAs.
 ```r
 > elementMetadata(gtf_test)$exonic_part_number[USE_test] <- exonic_parts_test
 
@@ -321,7 +321,10 @@ GRanges object with 24904 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
-Make the gtf file into a GRangesList, with each gene as a GRanges object. Within each gene, we have intervals of exons as GRanges. 
+## Step 2: Make the gtf file into a GRangesList, with each gene as a GRanges object. 
+
+Within each gene, we have intervals of exons as GRanges ranges. 
+
 ```r
 > grl_test <- split(gtf_test, elementMetadata(gtf_test)$gene_id)
 
@@ -360,6 +363,7 @@ GRanges object with 10 ranges and 7 metadata columns:
 ...
 <2793 more elements>
 ```
+## Step 3: Start to generate intronic bins within GTF file.
 
 ### Breakdown of Function 1: add_introns
 The `add_introns()` function takes in a GRanges object containing only exonic regions, and inserts intronic parts between the existing exonic regions. 
@@ -507,7 +511,7 @@ GRanges object with 9 ranges and 7 metadata columns:
 
 [1] 9
 ```
-# add a figure here somewhere about intronic region generation
+
 Get all exons but the last entry (since the last exon entry does not require a preceding intronic region).
 ```r
 > seqnames(exons)[-1]
@@ -643,7 +647,9 @@ GRanges object with 9 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
+
 We now want to "annotate" the intronic bins with intron IDs (arbitrarily numbered 1, 2, 3, etc.)
+
 ```r
 > sprintf("%03i", c(1:length(introns)))
 
@@ -653,6 +659,7 @@ We now want to "annotate" the intronic bins with intron IDs (arbitrarily numbere
 ```
 
 To account for a special case where the intronic bin is 0 bp large (which can occur when 2 exons are consecutively next to each other), we get rid of the 0bp intronic bins. 
+
 ```r
 > which(width(introns) <= 0)
 
@@ -669,7 +676,9 @@ if(length(DISCARD) > 0) { # if there are things to discard
   intron_ids <- intron_ids[-DISCARD] # grabs all but the DISCARD id and updates intron_ids
 }
 ```
+
 If there are intronic bins created for that gene (i.e. `if(length(introns) > 0)`), we proceed as follows:
+
 ```r
 > as.data.frame(elementMetadata(exons))
 
@@ -687,6 +696,7 @@ If there are intronic bins created for that gene (i.e. `if(length(introns) > 0)`
 ```
 
 Get the number of additional rows to add for intronic bins.
+
 ```r
 > nrows <- length(introns)
 
@@ -696,6 +706,7 @@ Get the number of additional rows to add for intronic bins.
 ```
 
 Get the current exonic bins based on the number of intronic bins.
+
 ```r
 > df[1:nrows,]
 
@@ -713,6 +724,7 @@ Get the current exonic bins based on the number of intronic bins.
 ```
 
 Transform the `gene_id` and `transcripts` columns to `character` type.
+
 ```r
 > class(metadf$gene_id)
 
@@ -726,6 +738,7 @@ Transform the `gene_id` and `transcripts` columns to `character` type.
 ```
 
 Fill the `transcripts` values to all `NA`, since we are creating a dataframe for intronic bins.
+
 ```r
 > as.character(c(rep(NA, nrows)))
 
@@ -747,6 +760,7 @@ Fill the `transcripts` values to all `NA`, since we are creating a dataframe for
 ```
 
 Fill in the `type` column for the dataframe as `intronic_part`.
+
 ```r
 > c(rep("intronic_part", nrows))
 
@@ -774,6 +788,7 @@ Levels: aggregate_gene exonic_part intronic_part
 ```
 
 Replace `exonic_part_number` with the intron IDs that we've created earlier.
+
 ```r
 > intron_ids
 
@@ -795,6 +810,7 @@ Replace `exonic_part_number` with the intron IDs that we've created earlier.
 ```
 
 Now that the intron metadata has been created, load it into the `introns` GRanges we've created earlier.
+
 ```r
 > introns
 
@@ -840,8 +856,8 @@ GRanges object with 8 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
-
 Now the intronic bin GRanges are suitable for combining with the exons Granges. We see that the final GRanges object has both `exonic_part` (exonic bins) and `intronic_part` (intronic bins). 
+
 ```r
 > grl_test$ENSMUSG00000000001.5
 
@@ -910,6 +926,7 @@ We sort/order the final GRanges output (containing both exonic and intronic bins
 
 1. Their start coordinate
 2. Their type (aggregate_gene --> exonic_part --> intronic_part)
+
 ```r
 > elementMetadata(grl_test$ENSMUSG00000000001.5)$type
 
@@ -1133,9 +1150,10 @@ GRanges object with 18 ranges and 7 metadata columns:
 ...
 <5 more elements>
 ```
-
+## Step 4: Generate a GTF file containing exonic and intronic bins.
 Now, we would like to convert this GRangesList containing both exonic and intronic bins into a usable GTF file, which can be utilised for downstream read counting. This is done in the final function, `asGFF2`, which takes in a GRangesList and outputs a GTF file. 
 
+### Breakdown of Function 2: asGFF2
 ```r
 > asGFF2 <- function(x) {
   df <- as.data.frame(x) # take in a GRangesList, x
