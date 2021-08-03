@@ -11,6 +11,9 @@
 
 [Step 4: Generate a GTF file containing exonic and intronic bins](#step4)
 <a name="headers"/>
+<a name="step2"/>
+<a name="step3"/>
+<a name="step4"/>
 
 ## Step 1: Read in flattened GTF file and view metadata
 ```r
