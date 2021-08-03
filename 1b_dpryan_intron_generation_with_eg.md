@@ -949,7 +949,7 @@ GRanges object with 10 ranges and 7 metadata columns:
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
 
-The preceding `add_introns` function is applied to **all** the genes within the original GRangesList, with each gene being a GRanges object within the GRangesList. Once that is done, 
+The preceding `add_introns` function is applied to **all** the genes within the original GRangesList, with each gene being a GRanges object within the GRangesList. Once that is done, we can see that each gene has counting bins not only for exonic parts, but also intronic parts. There is nothing "special" about these intronic bins - they are simply coordinates of the genomic intervals between existing exonic parts. 
 
 ```r
 # Original GRangesList
@@ -988,5 +988,306 @@ GRanges object with 10 ranges and 7 metadata columns:
 ...
 <2793 more elements>
 # Result of applying with_introns function to each gene within the GRangesList
->>>>>
+> with_introns_grl_test
+
+GRangesList object of length 2794:
+$ENSMUSG00000000001.5
+GRanges object with 18 ranges and 7 metadata columns:
+       seqnames              ranges strand |                       source           type     score     phase
+          <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>
+   [1]     chr3 108014596-108053462      - | dexseq_prepare_annotation.py aggregate_gene        NA      <NA>
+   [2]     chr3 108014596-108016632      - | dexseq_prepare_annotation.py exonic_part           NA      <NA>
+   [3]     chr3 108016633-108016718      - | dexseq_prepare_annotation.py intronic_part         NA      <NA>
+   [4]     chr3 108016719-108016928      - | dexseq_prepare_annotation.py exonic_part           NA      <NA>
+   [5]     chr3 108016929-108019250      - | dexseq_prepare_annotation.py intronic_part         NA      <NA>
+   ...      ...                 ...    ... .                          ...            ...       ...       ...
+  [14]     chr3 108030858-108030999      - | dexseq_prepare_annotation.py  exonic_part          NA      <NA>
+  [15]     chr3 108031000-108031110      - | dexseq_prepare_annotation.py  intronic_part        NA      <NA>
+  [16]     chr3 108031111-108031153      - | dexseq_prepare_annotation.py  exonic_part          NA      <NA>
+  [17]     chr3 108031154-108053203      - | dexseq_prepare_annotation.py  intronic_part        NA      <NA>
+  [18]     chr3 108053204-108053462      - | dexseq_prepare_annotation.py  exonic_part          NA      <NA>
+                    gene_id          transcripts exonic_part_number
+                <character>          <character>        <character>
+   [1] ENSMUSG00000000001.5                 <NA>               <NA>
+   [2] ENSMUSG00000000001.5 ENSMUST00000000001.5                001
+   [3] ENSMUSG00000000001.5                 <NA>                001
+   [4] ENSMUSG00000000001.5 ENSMUST00000000001.5                002
+   [5] ENSMUSG00000000001.5                 <NA>                002
+   ...                  ...                  ...                ...
+  [14] ENSMUSG00000000001.5 ENSMUST00000000001.5                007
+  [15] ENSMUSG00000000001.5                 <NA>                007
+  [16] ENSMUSG00000000001.5 ENSMUST00000000001.5                008
+  [17] ENSMUSG00000000001.5                 <NA>                008
+  [18] ENSMUSG00000000001.5 ENSMUST00000000001.5                009
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+
+...
+<2793 more elements>
+```
+
+Before moving on, we do some simple sorting of the intervals based on chromosome and start coordinate, to facilitate downstream steps. To do this, we first grab the chromosome and start coordinates of all the intervals. We can see the difference between a sorted and unsorted output. In the unsorted output, the GRangesList is sorted by ENSMUSG gene name, while the sorted output is sorted based on actual coordinates. 
+
+```r
+> chroms <- sapply(with_introns_grl_test, function(x) as.factor(seqnames(x))[1])
+
+> head(chroms)
+
+ ENSMUSG00000000001.5 ENSMUSG00000000339.15 ENSMUSG00000000340.11 ENSMUSG00000000563.18 ENSMUSG00000000794.10 ENSMUSG00000001016.13 
+                 chr3                  chr3                  chr3                  chr3                  chr3                  chr3 
+Levels: chr3
+
+> starts <- sapply(with_introns_grl_test, function(x) start(x)[1])
+
+> head(starts)
+
+ ENSMUSG00000000001.5 ENSMUSG00000000339.15 ENSMUSG00000000340.11 ENSMUSG00000000563.18 ENSMUSG00000000794.10 ENSMUSG00000001016.13 
+            108014596             116282612             116306719             105850014              89427471              90383433 
+            
+> o <- order(chroms, starts)
+
+> with_introns_grl_test_ordered <- with_introns_grl_test[o]
+
+> head(with_introns_grl_test_ordered)
+
+GRangesList object of length 6:
+$ENSMUSG00002075012.1
+GRanges object with 2 ranges and 7 metadata columns:
+      seqnames          ranges strand |                       source           type     score     phase              gene_id
+         <Rle>       <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
+  [1]     chr3 3069070-3069169      - | dexseq_prepare_annotation.py aggregate_gene        NA      <NA> ENSMUSG00002075012.1
+  [2]     chr3 3069070-3069169      - | dexseq_prepare_annotation.py exonic_part           NA      <NA> ENSMUSG00002075012.1
+               transcripts exonic_part_number
+               <character>        <character>
+  [1]                 <NA>               <NA>
+  [2] ENSMUST00020182553.1                001
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+
+$ENSMUSG00002075999.1
+GRanges object with 2 ranges and 7 metadata columns:
+      seqnames          ranges strand |                       source           type     score     phase              gene_id
+         <Rle>       <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
+  [1]     chr3 3092718-3092817      - | dexseq_prepare_annotation.py aggregate_gene        NA      <NA> ENSMUSG00002075999.1
+  [2]     chr3 3092718-3092817      - | dexseq_prepare_annotation.py exonic_part           NA      <NA> ENSMUSG00002075999.1
+               transcripts exonic_part_number
+               <character>        <character>
+  [1]                 <NA>               <NA>
+  [2] ENSMUST00020181724.1                001
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+
+$ENSMUSG00000103416.2
+GRanges object with 2 ranges and 7 metadata columns:
+      seqnames          ranges strand |                       source           type     score     phase              gene_id
+         <Rle>       <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
+  [1]     chr3 3253093-3253219      + | dexseq_prepare_annotation.py aggregate_gene        NA      <NA> ENSMUSG00000103416.2
+  [2]     chr3 3253093-3253219      + | dexseq_prepare_annotation.py exonic_part           NA      <NA> ENSMUSG00000103416.2
+               transcripts exonic_part_number
+               <character>        <character>
+  [1]                 <NA>               <NA>
+  [2] ENSMUST00000191986.2                001
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+
+...
+<3 more elements>
+
+> head(with_introns_grl_test)
+
+GRangesList object of length 6:
+$ENSMUSG00000000001.5
+GRanges object with 18 ranges and 7 metadata columns:
+       seqnames              ranges strand |                       source           type     score     phase              gene_id
+          <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
+   [1]     chr3 108014596-108053462      - | dexseq_prepare_annotation.py aggregate_gene        NA      <NA> ENSMUSG00000000001.5
+   [2]     chr3 108014596-108016632      - | dexseq_prepare_annotation.py exonic_part           NA      <NA> ENSMUSG00000000001.5
+   [3]     chr3 108016633-108016718      - | dexseq_prepare_annotation.py intronic_part         NA      <NA> ENSMUSG00000000001.5
+   [4]     chr3 108016719-108016928      - | dexseq_prepare_annotation.py exonic_part           NA      <NA> ENSMUSG00000000001.5
+   [5]     chr3 108016929-108019250      - | dexseq_prepare_annotation.py intronic_part         NA      <NA> ENSMUSG00000000001.5
+   ...      ...                 ...    ... .                          ...            ...       ...       ...                  ...
+  [14]     chr3 108030858-108030999      - | dexseq_prepare_annotation.py  exonic_part          NA      <NA> ENSMUSG00000000001.5
+  [15]     chr3 108031000-108031110      - | dexseq_prepare_annotation.py  intronic_part        NA      <NA> ENSMUSG00000000001.5
+  [16]     chr3 108031111-108031153      - | dexseq_prepare_annotation.py  exonic_part          NA      <NA> ENSMUSG00000000001.5
+  [17]     chr3 108031154-108053203      - | dexseq_prepare_annotation.py  intronic_part        NA      <NA> ENSMUSG00000000001.5
+  [18]     chr3 108053204-108053462      - | dexseq_prepare_annotation.py  exonic_part          NA      <NA> ENSMUSG00000000001.5
+                transcripts exonic_part_number
+                <character>        <character>
+   [1]                 <NA>               <NA>
+   [2] ENSMUST00000000001.5                001
+   [3]                 <NA>                001
+   [4] ENSMUST00000000001.5                002
+   [5]                 <NA>                002
+   ...                  ...                ...
+  [14] ENSMUST00000000001.5                007
+  [15]                 <NA>                007
+  [16] ENSMUST00000000001.5                008
+  [17]                 <NA>                008
+  [18] ENSMUST00000000001.5                009
+  -------
+  seqinfo: 1 sequence from an unspecified genome; no seqlengths
+
+...
+<5 more elements>
+```
+
+Now, we would like to convert this GRangesList containing both exonic and intronic bins into a usable GTF file, which can be utilised for downstream read counting. This is done in the final function, `asGFF2`, which takes in a GRangesList and outputs a GTF file. 
+
+```r
+> asGFF2 <- function(x) {
+  df <- as.data.frame(x) # take in a GRangesList, x
+  aggregates <- which(df$type == "aggregate_gene") # returns TRUE for the positions that are aggregate genes
+  # character creates a character vector of the specified length
+  meta <- character(nrow(df)) # meta is a blank character vector with length = no of rows in df
+  # meta has a column called aggregates containing all the gene_id of the aggregates in df
+  meta[aggregates] <- sprintf("gene_id \"%s\"", df$gene_id[aggregates])
+  # This gives introns a transcript "NA" field, which may not be ideal
+  # keeps everything but aggregates
+  meta[-aggregates] <- sprintf("transcripts \"%s\"; exonic_part_number \"%s\"; gene_id \"%s\"", df$transcripts[-aggregates], df$exonic_part_number[-aggregates], df$gene_id[-aggregates])
+  # paste():Concatenate vectors after converting to character. converts its arguments (via as.character) to character strings
+  paste(df$seqnames, "dexseq_prepare_annotation.py", df$type, df$start, df$end, ".", df$strand, ".", meta, sep="\t")
+}
+```
+Breaking down the `asGFF2` function using 1 gene (ENSMUSG00000017688.15):
+
+```r
+> df <- as.data.frame(with_introns_grl_test_ordered$ENSMUSG00000017688.15)
+
+> head(df)
+
+  seqnames   start     end  width strand                       source           type score phase               gene_id
+1     chr3 3573090 3723112 150023      + dexseq_prepare_annotation.py aggregate_gene    NA    NA ENSMUSG00000017688.15
+2     chr3 3573090 3573392    303      + dexseq_prepare_annotation.py    exonic_part    NA    NA ENSMUSG00000017688.15
+3     chr3 3573393 3699209 125817      + dexseq_prepare_annotation.py  intronic_part    NA    NA ENSMUSG00000017688.15
+4     chr3 3699210 3699407    198      + dexseq_prepare_annotation.py    exonic_part    NA    NA ENSMUSG00000017688.15
+5     chr3 3699408 3703118   3711      + dexseq_prepare_annotation.py  intronic_part    NA    NA ENSMUSG00000017688.15
+6     chr3 3703119 3703290    172      + dexseq_prepare_annotation.py    exonic_part    NA    NA ENSMUSG00000017688.15
+                                transcripts exonic_part_number
+1                                      <NA>               <NA>
+2                      ENSMUST00000108393.8                001
+3                                      <NA>                001
+4                      ENSMUST00000108394.3                002
+5                                      <NA>                002
+6 ENSMUST00000108394.3+ENSMUST00000108393.8                003
+
+> aggregates <- which(df$type == "aggregate_gene") # returns the row numbers of 'aggregate_gene' entries
+
+> head(aggregates)
+
+[1] 1
+```
+
+Creating a blank dataframe to subsequently fill with exons:
+
+```r
+> meta <- character(nrow(df))
+
+> meta
+
+ [1] "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+```
+
+Fill with aggregate_gene entries first: 
+
+```r
+> meta[aggregates] <- sprintf("gene_id \"%s\"", df$gene_id[aggregates])
+
+> meta
+
+ [1] "gene_id \"ENSMUSG00000017688.15\"" ""                                  ""                                 
+ [4] ""                                  ""                                  ""                                 
+ [7] ""                                  ""                                  ""                                 
+[10] ""                                  ""                                  ""                                 
+[13] ""                                  ""                                  ""                                 
+[16] ""                                  ""                                  ""                                 
+[19] ""                                  ""                                  ""                                 
+[22] ""                                  ""                                 
+```
+Populate with the exonic and intronic bins:
+
+```r
+> meta[-aggregates] <- sprintf("transcripts \"%s\"; exonic_part_number \"%s\"; gene_id \"%s\"", df$transcripts[-aggregates], df$exonic_part_number[-aggregates], df$gene_id[-aggregates])
+
+> meta
+
+ [1] "gene_id \"ENSMUSG00000017688.15\""                                                                                       
+ [2] "transcripts \"ENSMUST00000108393.8\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00000017688.15\""                     
+ [3] "transcripts \"NA\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00000017688.15\""                                       
+ [4] "transcripts \"ENSMUST00000108394.3\"; exonic_part_number \"002\"; gene_id \"ENSMUSG00000017688.15\""                     
+ [5] "transcripts \"NA\"; exonic_part_number \"002\"; gene_id \"ENSMUSG00000017688.15\""                                       
+ [6] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"003\"; gene_id \"ENSMUSG00000017688.15\""
+ [7] "transcripts \"NA\"; exonic_part_number \"003\"; gene_id \"ENSMUSG00000017688.15\""                                       
+ [8] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"004\"; gene_id \"ENSMUSG00000017688.15\""
+ [9] "transcripts \"NA\"; exonic_part_number \"004\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[10] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"005\"; gene_id \"ENSMUSG00000017688.15\""
+[11] "transcripts \"NA\"; exonic_part_number \"005\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[12] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"006\"; gene_id \"ENSMUSG00000017688.15\""
+[13] "transcripts \"NA\"; exonic_part_number \"006\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[14] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"007\"; gene_id \"ENSMUSG00000017688.15\""
+[15] "transcripts \"NA\"; exonic_part_number \"007\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[16] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"008\"; gene_id \"ENSMUSG00000017688.15\""
+[17] "transcripts \"NA\"; exonic_part_number \"008\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[18] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"009\"; gene_id \"ENSMUSG00000017688.15\""
+[19] "transcripts \"NA\"; exonic_part_number \"009\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[20] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"010\"; gene_id \"ENSMUSG00000017688.15\""
+[21] "transcripts \"NA\"; exonic_part_number \"010\"; gene_id \"ENSMUSG00000017688.15\""                                       
+[22] "transcripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"011\"; gene_id \"ENSMUSG00000017688.15\""
+[23] "transcripts \"ENSMUST00000108394.3\"; exonic_part_number \"012\"; gene_id \"ENSMUSG00000017688.15\""         
+```
+
+Concatenate all the entries together into a larger dataframe containing relevant information:
+
+```r
+> paste(df$seqnames, "dexseq_prepare_annotation.py", df$type, df$start, df$end, ".", df$strand, ".", meta, sep="\t")
+
+ [1] "chr3\tdexseq_prepare_annotation.py\taggregate_gene\t3573090\t3723112\t.\t+\t.\tgene_id \"ENSMUSG00000017688.15\""                                                                                    
+ [2] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3573090\t3573392\t.\t+\t.\ttranscripts \"ENSMUST00000108393.8\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00000017688.15\""                     
+ [3] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3573393\t3699209\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00000017688.15\""                                     
+ [4] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3699210\t3699407\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3\"; exonic_part_number \"002\"; gene_id \"ENSMUSG00000017688.15\""                     
+ [5] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3699408\t3703118\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"002\"; gene_id \"ENSMUSG00000017688.15\""                                     
+ [6] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3703119\t3703290\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"003\"; gene_id \"ENSMUSG00000017688.15\""
+ [7] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3703291\t3706282\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"003\"; gene_id \"ENSMUSG00000017688.15\""                                     
+ [8] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3706283\t3706377\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"004\"; gene_id \"ENSMUSG00000017688.15\""
+ [9] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3706378\t3708023\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"004\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[10] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3708024\t3708130\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"005\"; gene_id \"ENSMUSG00000017688.15\""
+[11] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3708131\t3709595\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"005\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[12] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3709596\t3709751\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"006\"; gene_id \"ENSMUSG00000017688.15\""
+[13] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3709752\t3713093\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"006\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[14] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3713094\t3713181\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"007\"; gene_id \"ENSMUSG00000017688.15\""
+[15] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3713182\t3716331\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"007\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[16] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3716332\t3716484\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"008\"; gene_id \"ENSMUSG00000017688.15\""
+[17] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3716485\t3716607\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"008\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[18] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3716608\t3716844\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"009\"; gene_id \"ENSMUSG00000017688.15\""
+[19] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3716845\t3717896\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"009\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[20] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3717897\t3718019\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"010\"; gene_id \"ENSMUSG00000017688.15\""
+[21] "chr3\tdexseq_prepare_annotation.py\tintronic_part\t3718020\t3722114\t.\t+\t.\ttranscripts \"NA\"; exonic_part_number \"010\"; gene_id \"ENSMUSG00000017688.15\""                                     
+[22] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3722115\t3722904\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3+ENSMUST00000108393.8\"; exonic_part_number \"011\"; gene_id \"ENSMUSG00000017688.15\""
+[23] "chr3\tdexseq_prepare_annotation.py\texonic_part\t3722905\t3723112\t.\t+\t.\ttranscripts \"ENSMUST00000108394.3\"; exonic_part_number \"012\"; gene_id \"ENSMUSG00000017688.15\""       
+```
+
+We use `lapply` to apply the `asGFF2` function to every gene in the GRangesList.
+
+```r
+> final_output <- unlist(lapply(with_introns_grl_test_ordered, asGFF2))
+
+> head(final_output)
+
+                                                                                                                                                   ENSMUSG00002075012.11 
+                                                               "chr3\tdexseq_prepare_annotation.py\taggregate_gene\t3069070\t3069169\t.\t-\t.\tgene_id \"ENSMUSG00002075012.1\"" 
+                                                                                                                                                   ENSMUSG00002075012.12 
+"chr3\tdexseq_prepare_annotation.py\texonic_part\t3069070\t3069169\t.\t-\t.\ttranscripts \"ENSMUST00020182553.1\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00002075012.1\"" 
+                                                                                                                                                   ENSMUSG00002075999.11 
+                                                               "chr3\tdexseq_prepare_annotation.py\taggregate_gene\t3092718\t3092817\t.\t-\t.\tgene_id \"ENSMUSG00002075999.1\"" 
+                                                                                                                                                   ENSMUSG00002075999.12 
+"chr3\tdexseq_prepare_annotation.py\texonic_part\t3092718\t3092817\t.\t-\t.\ttranscripts \"ENSMUST00020181724.1\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00002075999.1\"" 
+                                                                                                                                                   ENSMUSG00000103416.21 
+                                                               "chr3\tdexseq_prepare_annotation.py\taggregate_gene\t3253093\t3253219\t.\t+\t.\tgene_id \"ENSMUSG00000103416.2\"" 
+                                                                                                                                                   ENSMUSG00000103416.22 
+"chr3\tdexseq_prepare_annotation.py\texonic_part\t3253093\t3253219\t.\t+\t.\ttranscripts \"ENSMUST00000191986.2\"; exonic_part_number \"001\"; gene_id \"ENSMUSG00000103416.2\"" 
+```
+
+Lastly, write the entries into a GTF file that can be used. 
+
+```r
+> write.table(final_output, file="chr3_flattened.gtf", row.names=F, col.names=F, quote=F)
 ```
