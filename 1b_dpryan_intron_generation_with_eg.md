@@ -3,9 +3,10 @@
 ![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
 
 ##### Table of Contents  
-[Step 1: Read in flattened GTF file and view metadata](#headers)  
-[Emphasis](#emphasis)  
-...snip...    
+[Step 1: Read in flattened GTF file and view metadata] 
+[Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object]
+[Step 3: Start to generate intronic bins within GTF file]
+[Step 4: Generate a GTF file containing exonic and intronic bins]
 <a name="headers"/>
 
 ## Step 1: Read in flattened GTF file and view metadata
@@ -327,7 +328,7 @@ GRanges object with 24904 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
-## Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object. 
+## Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object
 
 Within each gene, we have intervals of exons as GRanges ranges. 
 
@@ -369,7 +370,7 @@ GRanges object with 10 ranges and 7 metadata columns:
 ...
 <2793 more elements>
 ```
-## Step 3: Start to generate intronic bins within GTF file.
+## Step 3: Start to generate intronic bins within GTF file
 
 ### Breakdown of Function 1: add_introns
 The `add_introns()` function takes in a GRanges object containing only exonic regions, and inserts intronic parts between the existing exonic regions. 
@@ -1156,7 +1157,7 @@ GRanges object with 18 ranges and 7 metadata columns:
 ...
 <5 more elements>
 ```
-## Step 4: Generate a GTF file containing exonic and intronic bins.
+## Step 4: Generate a GTF file containing exonic and intronic bins
 Now, we would like to convert this GRangesList containing both exonic and intronic bins into a usable GTF file, which can be utilised for downstream read counting. This is done in the final function, `asGFF2`, which takes in a GRangesList and outputs a GTF file. 
 
 ### Breakdown of Function 2: asGFF2
