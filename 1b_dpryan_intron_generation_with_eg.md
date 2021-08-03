@@ -1291,3 +1291,7 @@ Lastly, write the entries into a GTF file that can be used.
 ```r
 > write.table(final_output, file="chr3_flattened.gtf", row.names=F, col.names=F, quote=F)
 ```
+
+Final GTF file containing intronic bins:
+
+![image](https://user-images.githubusercontent.com/68455070/127977975-f81fb268-9c48-4639-87e0-b94663ee5a32.png)
