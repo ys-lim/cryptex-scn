@@ -2,6 +2,7 @@
 ### Read in .gtf file (subset to chr3 only) and view metadata
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
+
 > head(gtf_test)
 
 GRanges object with 6 ranges and 7 metadata columns:
@@ -27,6 +28,7 @@ GRanges object with 6 ranges and 7 metadata columns:
 Get metadata.
 ```r
 > meta_test <- elementMetadata(gtf_test)
+
 > meta_test
 
 DataFrame with 24904 rows and 7 columns
@@ -61,6 +63,7 @@ DataFrame with 24904 rows and 7 columns
 Add in `intronic_part` as a factor in `gtf_test`.
 ```r
 > elementMetadata(gtf_test)$type <- factor(elementMetadata(gtf_test)$type, levels=c(levels(elementMetadata(gtf_test)$type), "intronic_part"))
+
 > head(elementMetadata(gtf_test)$type)
 
 [1] aggregate_gene exonic_part    aggregate_gene exonic_part    aggregate_gene exonic_part   
@@ -70,6 +73,7 @@ Levels: aggregate_gene exonic_part intronic_part
 Take note of rows that have NA in `exonic_part_number` column.
 ```r
 > USE_test <- which(!is.na(elementMetadata(gtf_test)$exonic_part_number))
+
 > USE_test
 
    [1]    2    4    6    8   10   11   12   13   14   15   16   17   18   19   20   21   23   25   27   29   31   33   35   37
@@ -176,6 +180,7 @@ Format `exonic_part_number` and filter out NA values. View the filtered `exonic_
 
 ```r
 > exonic_parts_test <- sprintf("%03s", elementMetadata(gtf_test)$exonic_part_number[USE_test])
+
 > exonic_parts_test
 
    [1] "001" "001" "001" "001" "001" "002" "003" "004" "005" "006" "007" "008" "009" "010" "011" "012" "001" "001" "001" "001"
@@ -234,6 +239,7 @@ Format `exonic_part_number` and filter out NA values. View the filtered `exonic_
 
 ```r
 > elementMetadata(gtf_test)$exonic_part_number <- as.character(elementMetadata(gtf_test)$exonic_part_number)
+
 > head(elementMetadata(gtf_test))
 
 DataFrame with 6 rows and 7 columns
@@ -249,6 +255,7 @@ DataFrame with 6 rows and 7 columns
 Replace `exonic_part_number` column with filtered version.
 ```r
 > elementMetadata(gtf_test)$exonic_part_number[USE_test] <- exonic_parts_test
+
 > elementMetadata(gtf_test)
 
 DataFrame with 24904 rows and 7 columns
@@ -314,6 +321,7 @@ GRanges object with 24904 ranges and 7 metadata columns:
 Make the gtf file into a GRangesList, with each gene as a GRanges object. Within each gene, we have intervals of exons as GRanges. 
 ```r
 > grl_test <- split(gtf_test, elementMetadata(gtf_test)$gene_id)
+
 > grl_test
 
 GRangesList object of length 2794:
@@ -463,6 +471,7 @@ DataFrame with 10 rows and 7 columns
 10 dexseq_prepare_annotation.py    exonic_part        NA        NA ENSMUSG00000000001.5 ENSMUST00000000001.5                009
 
 > exons <- grl_test$ENSMUSG00000000001.5[which(elementMetadata(grl_test$ENSMUSG00000000001.5)$type=="exonic_part"),]
+
 > exons
 
 GRanges object with 9 ranges and 7 metadata columns:
@@ -533,23 +542,31 @@ Get all the intronic starts except for the last intronic region.
 Now we generate the ends of all the intronic regions. 
 ```r
 > start(exons)
+
 [1] 108014596 108016719 108019251 108019789 108023079 108025617 108030858 108031111 108053204
+
 > start(exons)-1
+
 [1] 108014595 108016718 108019250 108019788 108023078 108025616 108030857 108031110 108053203
+
 > ends <- start(exons)-1
 ```
 
 Get all but the first end of intronic region.
 ```r
 > ends[-1]
+
 [1] 108016718 108019250 108019788 108023078 108025616 108030857 108031110 108053203
+
 > ends <- ends[-1]
 ```
 
 Generate an IRanges object from the starts and ends of the intronic regions.
 ```r
 > bounds <- IRanges(start=starts, end=ends)
+
 > bounds
+
 IRanges object with 8 ranges and 0 metadata columns:
           start       end     width
       <integer> <integer> <integer>
@@ -566,17 +583,21 @@ IRanges object with 8 ranges and 0 metadata columns:
 Getting the strand information for all but the last exonic region.
 ```r
 > strand(exons)[-1]
+
 factor-Rle of length 8 with 1 run
   Lengths: 8
   Values : -
 Levels(3): + - *
+
 > strand <- strand(exons)[-1]
 ```
 
 Construct a new GRanges object, which holds all the **intronic** intervals sandwiched by the exonic intervals. By comparing `introns` to `exons` GRanges objects, we can see how the exonic regions are interspersed by intronic bins. 
 ```r
 > introns <- GRanges(seqnames=seqname, ranges=bounds, strand=strand)
+
 > introns
+
 GRanges object with 8 ranges and 0 metadata columns:
       seqnames              ranges strand
          <Rle>           <IRanges>  <Rle>
@@ -590,7 +611,9 @@ GRanges object with 8 ranges and 0 metadata columns:
   [8]     chr3 108031154-108053203      -
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
+  
 > exons
+
 GRanges object with 9 ranges and 7 metadata columns:
       seqnames              ranges strand |                       source        type     score     phase              gene_id          transcripts
          <Rle>           <IRanges>  <Rle> |                     <factor>    <factor> <numeric> <integer>          <character>          <character>
@@ -620,17 +643,24 @@ GRanges object with 9 ranges and 7 metadata columns:
 We now want to "annotate" the intronic bins with intron IDs (arbitrarily numbered 1, 2, 3, etc.)
 ```r
 > sprintf("%03i", c(1:length(introns)))
+
 [1] "001" "002" "003" "004" "005" "006" "007" "008"
+
 > intron_ids <- sprintf("%03i", c(1:length(introns)))
 ```
 
 To account for a special case where the intronic bin is 0 bp large (which can occur when 2 exons are consecutively next to each other), we get rid of the 0bp intronic bins. 
 ```r
 > which(width(introns) <= 0)
+
 integer(0)
+
 > width(introns) <= 0
+
 [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+
 > DISCARD <- which(width(introns) <= 0)
+
 if(length(DISCARD) > 0) { # if there are things to discard
   introns <- introns[-DISCARD] # grabs all but the DISCARD elements and updates introns
   intron_ids <- intron_ids[-DISCARD] # grabs all but the DISCARD id and updates intron_ids
@@ -639,6 +669,7 @@ if(length(DISCARD) > 0) { # if there are things to discard
 If there are intronic bins created for that gene (i.e. `if(length(introns) > 0)`), we proceed as follows:
 ```r
 > as.data.frame(elementMetadata(exons))
+
                         source        type score phase              gene_id          transcripts exonic_part_number
 1 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                001
 2 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                002
@@ -655,13 +686,16 @@ If there are intronic bins created for that gene (i.e. `if(length(introns) > 0)`
 Get the number of additional rows to add for intronic bins.
 ```r
 > nrows <- length(introns)
+
 > length(introns) 
+
 [1] 8
 ```
 
 Get the current exonic bins based on the number of intronic bins.
 ```r
 > df[1:nrows,]
+
                         source        type score phase              gene_id          transcripts exonic_part_number
 1 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                001
 2 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                002
@@ -671,24 +705,33 @@ Get the current exonic bins based on the number of intronic bins.
 6 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                006
 7 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                007
 8 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                008
+
 > metadf <- df[1:nrows,]
 ```
 
 Transform the `gene_id` and `transcripts` columns to `character` type.
 ```r
 > class(metadf$gene_id)
+
 [1] "character"
+
 > class(metadf$transcripts)
+
 [1] "character"
+
 > metadf <- transform(metadf, gene_id=as.character(gene_id), transcripts=as.character(transcripts))
 ```
 
 Fill the `transcripts` values to all `NA`, since we are creating a dataframe for intronic bins.
 ```r
 > as.character(c(rep(NA, nrows)))
+
 [1] NA NA NA NA NA NA NA NA
+
 > metadf$transcripts <- as.character(c(rep(NA, nrows)))
+
 > metadf
+
                         source        type score phase              gene_id transcripts exonic_part_number
 1 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5        <NA>                001
 2 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5        <NA>                002
@@ -703,12 +746,19 @@ Fill the `transcripts` values to all `NA`, since we are creating a dataframe for
 Fill in the `type` column for the dataframe as `intronic_part`.
 ```r
 > c(rep("intronic_part", nrows))
+
 [1] "intronic_part" "intronic_part" "intronic_part" "intronic_part" "intronic_part" "intronic_part" "intronic_part" "intronic_part"
+
 > factor(c(rep("intronic_part", nrows)), levels=levels(metadf$type))
+
 [1] intronic_part intronic_part intronic_part intronic_part intronic_part intronic_part intronic_part intronic_part
+
 Levels: aggregate_gene exonic_part intronic_part
+
 > metadf$type <- factor(c(rep("intronic_part", nrows)), levels=levels(metadf$type))
+
 > metadf
+
                         source          type score phase              gene_id transcripts exonic_part_number
 1 dexseq_prepare_annotation.py intronic_part    NA    NA ENSMUSG00000000001.5        <NA>                001
 2 dexseq_prepare_annotation.py intronic_part    NA    NA ENSMUSG00000000001.5        <NA>                002
@@ -723,9 +773,13 @@ Levels: aggregate_gene exonic_part intronic_part
 Replace `exonic_part_number` with the intron IDs that we've created earlier.
 ```r
 > intron_ids
+
 [1] "001" "002" "003" "004" "005" "006" "007" "008"
+
 > metadf$exonic_part_number <- intron_ids
+
 > metadf
+
                         source          type score phase              gene_id transcripts exonic_part_number
 1 dexseq_prepare_annotation.py intronic_part    NA    NA ENSMUSG00000000001.5        <NA>                001
 2 dexseq_prepare_annotation.py intronic_part    NA    NA ENSMUSG00000000001.5        <NA>                002
@@ -740,6 +794,7 @@ Replace `exonic_part_number` with the intron IDs that we've created earlier.
 Now that the intron metadata has been created, load it into the `introns` GRanges we've created earlier.
 ```r
 > introns
+
 GRanges object with 8 ranges and 0 metadata columns:
       seqnames              ranges strand
          <Rle>           <IRanges>  <Rle>
@@ -753,8 +808,11 @@ GRanges object with 8 ranges and 0 metadata columns:
   [8]     chr3 108031154-108053203      -
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
+  
 > elementMetadata(introns) <- metadf
+
 > introns
+
 GRanges object with 8 ranges and 7 metadata columns:
       seqnames              ranges strand |                       source          type     score     phase              gene_id transcripts
          <Rle>           <IRanges>  <Rle> |                     <factor>      <factor> <numeric> <integer>          <character> <character>
@@ -783,6 +841,7 @@ GRanges object with 8 ranges and 7 metadata columns:
 Now the intronic bin GRanges are suitable for combining with the exons Granges. We see that the final GRanges object has both `exonic_part` (exonic bins) and `intronic_part` (intronic bins). 
 ```r
 > grl_test$ENSMUSG00000000001.5
+
 GRanges object with 10 ranges and 7 metadata columns:
        seqnames              ranges strand |                       source           type     score     phase              gene_id
           <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
@@ -810,7 +869,9 @@ GRanges object with 10 ranges and 7 metadata columns:
   [10] ENSMUST00000000001.5                009
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
+  
 > append(grl_test$ENSMUSG00000000001.5, introns)
+
 GRanges object with 18 ranges and 7 metadata columns:
        seqnames              ranges strand |                       source           type     score     phase              gene_id
           <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
@@ -848,12 +909,17 @@ We sort/order the final GRanges output (containing both exonic and intronic bins
 2. Their type (aggregate_gene --> exonic_part --> intronic_part)
 ```r
 > elementMetadata(grl_test$ENSMUSG00000000001.5)$type
+
  [1] aggregate_gene exonic_part    exonic_part    exonic_part    exonic_part    exonic_part    exonic_part    exonic_part    exonic_part   
 [10] exonic_part   
 Levels: aggregate_gene exonic_part intronic_part
+
 > start(grl_test$ENSMUSG00000000001.5)
+
  [1] 108014596 108014596 108016719 108019251 108019789 108023079 108025617 108030858 108031111 108053204
+ 
 > grl_test$ENSMUSG00000000001.5[order(start(grl_test$ENSMUSG00000000001.5), elementMetadata(grl_test$ENSMUSG00000000001.5)$type),]
+
 GRanges object with 10 ranges and 7 metadata columns:
        seqnames              ranges strand |                       source           type     score     phase              gene_id
           <Rle>           <IRanges>  <Rle> |                     <factor>       <factor> <numeric> <integer>          <character>
