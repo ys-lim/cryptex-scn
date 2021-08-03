@@ -4,11 +4,8 @@
 
 ### Steps
 [Step 1: Read in flattened GTF file and view metadata](#headers)
-
 [Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object](#step2)
-
 [Step 3: Start to generate intronic bins within GTF file](#step3)
-
 [Step 4: Generate a GTF file containing exonic and intronic bins](#step4)
 <a name="headers"/>
 <a name="step2"/>
