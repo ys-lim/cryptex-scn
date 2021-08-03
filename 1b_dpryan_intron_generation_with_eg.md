@@ -1,4 +1,7 @@
-# Spacing for code
+# Intronic bin generation on flattened GTF
+
+![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
+
 ### Read in .gtf file (subset to chr3 only) and view metadata
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
