@@ -3,12 +3,12 @@
 ![image](https://user-images.githubusercontent.com/68455070/127979776-c5e75e9e-ffa4-4457-a341-021fc198a609.png)
 
 ### Steps
-**[Step 1: Read in flattened GTF file and view metadata](#step-1-read-in-flattened-gtf-file-and-view-metadata)**<br>
+**[Step 1: Read in flattened GTF file and view metadata](#step-1-read-in-flattened-gtf-file-and-convert-into-granges-object)**<br>
 **[Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object](#step-2-manipulate-the-gtf-file-into-a-grangeslist-with-each-gene-as-a-granges-object)**<br>
 **[Step 3: Start to generate intronic bins within GTF file](#step-3-start-to-generate-intronic-bins-within-gtf-file)**<br>
 **[Step 4: Generate a GTF file containing exonic and intronic bins](#step-4-generate-a-gtf-file-containing-exonic-and-intronic-bins)**<br>
 
-## Step 1: Read in flattened GTF file and view metadata
+## Step 1: Read in flattened GTF file and convert into GRanges object
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
 
@@ -34,7 +34,7 @@ GRanges object with 6 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
-Get metadata.
+Load the metadata of the GTF file, now converted into a GRanges object. We can see that the metadata contains 7 columns, which matches the 7 metadata columns as displayed above when we view the GRanges object.
 ```r
 > meta_test <- elementMetadata(gtf_test)
 
@@ -69,7 +69,7 @@ DataFrame with 24904 rows and 7 columns
 24904                001
 ```
 
-Add in `intronic_part` as a factor in `gtf_test`.
+We can see that there are only 2 types of intervals: either an `aggregate_gene` or `exonic_part`. Our goal is to create a third type of interval, `intronic_part`. We prepare for this by adding `intronic_part` as a factor within the `type` column in the whole GRanges object. 
 ```r
 > elementMetadata(gtf_test)$type <- factor(elementMetadata(gtf_test)$type, levels=c(levels(elementMetadata(gtf_test)$type), "intronic_part"))
 
@@ -78,58 +78,8 @@ Add in `intronic_part` as a factor in `gtf_test`.
 [1] aggregate_gene exonic_part    aggregate_gene exonic_part    aggregate_gene exonic_part   
 Levels: aggregate_gene exonic_part intronic_part
 ```
+We now change our attention to the `exonic_part_number` column, which will be numbered for intervals that are labelled `exonic_part`. For intervals of type `aggregate_gene`, it will be `NA`.
 
-Take note of rows that have NA in `exonic_part_number` column.
-```r
-> USE_test <- which(!is.na(elementMetadata(gtf_test)$exonic_part_number))
-
-> USE_test
-
-   [1]    2    4    6    8   10   11   12   13   14   15   16   17   18   19   20   21   23   25   27   29   31   33   35   37
-  [25]   39   41   43   45   47   49   51   52   53   54   55   56   57   58   59   60   62   64   65   67   68   69   70   71
-  [49]   73   74   75   77   78   79   80   81   82   83   84   85   86   87   88   89   90   91   92   93   94   95   96   97
-  [73]   99  100  102  103  104  105  106  107  108  109  110  111  112  113  114  115  117  119  120  122  124  126  128  130
-  [97]  132  134  136  138  140  141  142  143  145  147  149  151  152  153  154  155  156  157  159  161  162  164  166  167
- [121]  168  169  170  171  172  173  174  175  176  177  178  180  181  182  183  184  185  186  187  188  189  190  191  192
- [145]  193  194  196  197  198  200  202  203  204  205  206  207  209  211  213  215  217  218  219  220  221  222  223  224
- [169]  225  226  227  228  230  231  233  234  235  237  238  239  240  241  242  243  244  245  246  247  248  249  251  253
- [193]  255  256  257  258  259  261  263  264  265  267  269  271  272  273  274  275  276  277  278  279  280  281  282  283
- [217]  284  285  286  287  288  289  290  291  292  293  294  295  296  297  298  299  301  303  304  305  307  309  310  311
- [241]  312  313  314  316  318  319  320  321  322  323  324  325  327  328  329  330  331  332  333  334  335  336  337  338
- [265]  339  340  342  344  346  347  348  349  350  351  352  353  354  355  356  357  358  359  360  361  363  364  366  368
- [289]  369  371  373  374  375  376  377  378  379  380  382  383  385  386  388  390  391  392  393  394  395  396  397  398
- [313]  399  400  401  402  404  405  406  407  408  409  410  411  412  414  416  418  420  421  422  423  424  425  426  427
- [337]  428  429  430  431  433  435  437  438  439  440  441  442  443  444  445  446  447  448  449  450  451  452  453  454
- [361]  455  456  457  458  460  461  462  463  464  465  466  467  468  469  470  471  472  473  474  475  476  477  478  479
- [385]  480  481  482  483  484  485  487  488  489  490  491  492  493  494  495  496  498  499  500  501  502  503  504  505
- [409]  506  507  508  509  511  513  515  517  519  521  523  525  527  528  529  530  531  533  535  537  538  539  541  543
- [433]  545  547  549  550  552  553  554  555  556  557  558  559  560  561  562  563  564  565  566  567  568  569  570  571
- [457]  572  573  575  577  579  581  583  585  587  589  590  591  592  594  596  597  599  600  601  602  603  604  605  606
- [481]  607  609  611  612  613  614  615  616  617  618  619  620  621  622  623  624  625  626  627  628  629  630  631  632
- [505]  633  634  635  636  637  638  639  640  641  642  643  644  645  646  647  649  650  651  652  653  654  655  656  657
- [529]  658  659  661  662  663  664  665  666  667  668  669  670  671  672  673  675  677  678  679  680  681  682  683  685
- [553]  686  687  688  690  691  692  693  694  695  696  697  698  699  700  701  703  705  706  707  708  709  710  711  712
- [577]  713  714  715  717  718  719  720  721  722  723  724  725  726  727  728  730  731  732  733  735  737  738  739  740
- [601]  741  743  744  745  747  748  749  750  751  752  753  754  755  756  757  758  760  761  762  763  764  765  766  767
- [625]  768  769  770  771  773  774  776  777  778  779  780  781  782  783  784  785  786  787  788  789  790  791  792  793
- [649]  794  796  798  800  801  802  803  804  805  806  808  810  812  814  815  816  817  818  819  820  821  822  823  824
- [673]  825  827  829  831  833  835  836  837  839  841  843  844  845  846  847  848  849  850  851  852  853  854  855  856
- [697]  857  858  859  860  862  864  866  868  870  872  874  875  876  877  878  879  881  883  885  886  887  888  889  890
- [721]  892  893  894  895  897  899  901  903  905  907  908  909  910  911  912  913  915  917  918  919  920  921  922  923
- [745]  924  925  926  927  928  929  930  931  932  933  934  935  936  937  938  939  940  941  942  944  945  946  947  948
- [769]  949  950  951  952  953  954  955  956  957  958  959  960  961  962  963  964  965  966  967  968  969  970  971  972
- [793]  973  974  975  976  978  979  981  983  984  985  986  987  988  989  990  991  992  993  994  995  997  999 1000 1002
- [817] 1003 1005 1006 1007 1008 1009 1010 1011 1012 1013 1014 1015 1016 1018 1020 1021 1023 1025 1027 1028 1029 1031 1032 1034
- [841] 1036 1037 1038 1039 1040 1041 1042 1043 1044 1045 1046 1047 1048 1049 1050 1051 1052 1053 1054 1055 1056 1057 1058 1059
- [865] 1060 1061 1062 1063 1064 1065 1066 1067 1068 1069 1070 1071 1072 1073 1074 1075 1076 1077 1078 1079 1080 1081 1082 1083
- [889] 1084 1085 1086 1087 1089 1090 1091 1092 1093 1094 1095 1096 1097 1098 1099 1100 1101 1102 1103 1104 1105 1106 1107 1108
- [913] 1109 1110 1111 1112 1113 1114 1115 1116 1117 1118 1119 1120 1121 1122 1123 1124 1125 1126 1128 1129 1130 1131 1132 1133
- [937] 1134 1135 1136 1137 1138 1139 1140 1141 1142 1143 1144 1145 1146 1147 1148 1149 1150 1151 1152 1153 1154 1155 1156 1157
- [961] 1158 1159 1160 1161 1162 1163 1165 1166 1167 1168 1169 1170 1171 1172 1173 1174 1175 1176 1177 1178 1180 1181 1182 1183
- [985] 1184 1185 1186 1187 1188 1189 1190 1191 1193 1195 1196 1197 1198 1199 1200 1201
- [ reached getOption("max.print") -- omitted 21110 entries ]
-```
-View the `exonic_part_number` column.
 ```r
 > elementMetadata(gtf_test)$exonic_part_number
 
@@ -185,8 +135,57 @@ View the `exonic_part_number` column.
  [981] "001" NA    "001" "002" "003" "004" "005" "006" "007" "008" "009" "010" "011" "012" "013" NA    "001" NA    "001" "002"
  [ reached getOption("max.print") -- omitted 23904 entries ]
 ```
-Format `exonic_part_number` and filter out NA values. View the filtered `exonic_part_number` column.
+We focus on the intervals that are of `exonic_part` type, and load their positions into `USE_test`.
+```r
+> USE_test <- which(!is.na(elementMetadata(gtf_test)$exonic_part_number))
 
+> USE_test
+
+   [1]    2    4    6    8   10   11   12   13   14   15   16   17   18   19   20   21   23   25   27   29   31   33   35   37
+  [25]   39   41   43   45   47   49   51   52   53   54   55   56   57   58   59   60   62   64   65   67   68   69   70   71
+  [49]   73   74   75   77   78   79   80   81   82   83   84   85   86   87   88   89   90   91   92   93   94   95   96   97
+  [73]   99  100  102  103  104  105  106  107  108  109  110  111  112  113  114  115  117  119  120  122  124  126  128  130
+  [97]  132  134  136  138  140  141  142  143  145  147  149  151  152  153  154  155  156  157  159  161  162  164  166  167
+ [121]  168  169  170  171  172  173  174  175  176  177  178  180  181  182  183  184  185  186  187  188  189  190  191  192
+ [145]  193  194  196  197  198  200  202  203  204  205  206  207  209  211  213  215  217  218  219  220  221  222  223  224
+ [169]  225  226  227  228  230  231  233  234  235  237  238  239  240  241  242  243  244  245  246  247  248  249  251  253
+ [193]  255  256  257  258  259  261  263  264  265  267  269  271  272  273  274  275  276  277  278  279  280  281  282  283
+ [217]  284  285  286  287  288  289  290  291  292  293  294  295  296  297  298  299  301  303  304  305  307  309  310  311
+ [241]  312  313  314  316  318  319  320  321  322  323  324  325  327  328  329  330  331  332  333  334  335  336  337  338
+ [265]  339  340  342  344  346  347  348  349  350  351  352  353  354  355  356  357  358  359  360  361  363  364  366  368
+ [289]  369  371  373  374  375  376  377  378  379  380  382  383  385  386  388  390  391  392  393  394  395  396  397  398
+ [313]  399  400  401  402  404  405  406  407  408  409  410  411  412  414  416  418  420  421  422  423  424  425  426  427
+ [337]  428  429  430  431  433  435  437  438  439  440  441  442  443  444  445  446  447  448  449  450  451  452  453  454
+ [361]  455  456  457  458  460  461  462  463  464  465  466  467  468  469  470  471  472  473  474  475  476  477  478  479
+ [385]  480  481  482  483  484  485  487  488  489  490  491  492  493  494  495  496  498  499  500  501  502  503  504  505
+ [409]  506  507  508  509  511  513  515  517  519  521  523  525  527  528  529  530  531  533  535  537  538  539  541  543
+ [433]  545  547  549  550  552  553  554  555  556  557  558  559  560  561  562  563  564  565  566  567  568  569  570  571
+ [457]  572  573  575  577  579  581  583  585  587  589  590  591  592  594  596  597  599  600  601  602  603  604  605  606
+ [481]  607  609  611  612  613  614  615  616  617  618  619  620  621  622  623  624  625  626  627  628  629  630  631  632
+ [505]  633  634  635  636  637  638  639  640  641  642  643  644  645  646  647  649  650  651  652  653  654  655  656  657
+ [529]  658  659  661  662  663  664  665  666  667  668  669  670  671  672  673  675  677  678  679  680  681  682  683  685
+ [553]  686  687  688  690  691  692  693  694  695  696  697  698  699  700  701  703  705  706  707  708  709  710  711  712
+ [577]  713  714  715  717  718  719  720  721  722  723  724  725  726  727  728  730  731  732  733  735  737  738  739  740
+ [601]  741  743  744  745  747  748  749  750  751  752  753  754  755  756  757  758  760  761  762  763  764  765  766  767
+ [625]  768  769  770  771  773  774  776  777  778  779  780  781  782  783  784  785  786  787  788  789  790  791  792  793
+ [649]  794  796  798  800  801  802  803  804  805  806  808  810  812  814  815  816  817  818  819  820  821  822  823  824
+ [673]  825  827  829  831  833  835  836  837  839  841  843  844  845  846  847  848  849  850  851  852  853  854  855  856
+ [697]  857  858  859  860  862  864  866  868  870  872  874  875  876  877  878  879  881  883  885  886  887  888  889  890
+ [721]  892  893  894  895  897  899  901  903  905  907  908  909  910  911  912  913  915  917  918  919  920  921  922  923
+ [745]  924  925  926  927  928  929  930  931  932  933  934  935  936  937  938  939  940  941  942  944  945  946  947  948
+ [769]  949  950  951  952  953  954  955  956  957  958  959  960  961  962  963  964  965  966  967  968  969  970  971  972
+ [793]  973  974  975  976  978  979  981  983  984  985  986  987  988  989  990  991  992  993  994  995  997  999 1000 1002
+ [817] 1003 1005 1006 1007 1008 1009 1010 1011 1012 1013 1014 1015 1016 1018 1020 1021 1023 1025 1027 1028 1029 1031 1032 1034
+ [841] 1036 1037 1038 1039 1040 1041 1042 1043 1044 1045 1046 1047 1048 1049 1050 1051 1052 1053 1054 1055 1056 1057 1058 1059
+ [865] 1060 1061 1062 1063 1064 1065 1066 1067 1068 1069 1070 1071 1072 1073 1074 1075 1076 1077 1078 1079 1080 1081 1082 1083
+ [889] 1084 1085 1086 1087 1089 1090 1091 1092 1093 1094 1095 1096 1097 1098 1099 1100 1101 1102 1103 1104 1105 1106 1107 1108
+ [913] 1109 1110 1111 1112 1113 1114 1115 1116 1117 1118 1119 1120 1121 1122 1123 1124 1125 1126 1128 1129 1130 1131 1132 1133
+ [937] 1134 1135 1136 1137 1138 1139 1140 1141 1142 1143 1144 1145 1146 1147 1148 1149 1150 1151 1152 1153 1154 1155 1156 1157
+ [961] 1158 1159 1160 1161 1162 1163 1165 1166 1167 1168 1169 1170 1171 1172 1173 1174 1175 1176 1177 1178 1180 1181 1182 1183
+ [985] 1184 1185 1186 1187 1188 1189 1190 1191 1193 1195 1196 1197 1198 1199 1200 1201
+ [ reached getOption("max.print") -- omitted 21110 entries ]
+```
+Now, we grab all the `exonic_part_number` for the entries that are not `NA`. `sprintf` formats the numbers to be zero-padded, up to the hundreds place, in string format. 
 ```r
 > exonic_parts_test <- sprintf("%03s", elementMetadata(gtf_test)$exonic_part_number[USE_test])
 
@@ -244,7 +243,7 @@ Format `exonic_part_number` and filter out NA values. View the filtered `exonic_
  [981] "001" "002" "003" "004" "005" "006" "007" "008" "009" "010" "011" "012" "001" "001" "002" "003" "004" "005" "006" "007"
  [ reached getOption("max.print") -- omitted 21110 entries ]
  ```
-Change the `exonic_part_number` column to character data type.
+Change the `exonic_part_number` column to character data type (i.e. a string representation).
 
 ```r
 > elementMetadata(gtf_test)$exonic_part_number <- as.character(elementMetadata(gtf_test)$exonic_part_number)
@@ -261,7 +260,7 @@ DataFrame with 6 rows and 7 columns
 5 dexseq_prepare_annotation.py aggregate_gene        NA        NA ENSMUSG00000103416.2                   NA                 NA
 6 dexseq_prepare_annotation.py    exonic_part        NA        NA ENSMUSG00000103416.2 ENSMUST00000191986.2                001
 ```
-Replace `exonic_part_number` column with filtered version, without NAs.
+Replace `exonic_part_number` column with filtered version, without NAs. Replace the `exonic_part_number` column with formatted characters as we did previously with `sprintf`: `sprintf` formats the numbers to be zero-padded, up to the hundreds place, in string format. 
 ```r
 > elementMetadata(gtf_test)$exonic_part_number[USE_test] <- exonic_parts_test
 
@@ -327,9 +326,9 @@ GRanges object with 24904 ranges and 7 metadata columns:
   -------
   seqinfo: 1 sequence from an unspecified genome; no seqlengths
 ```
-## Step 2: Manipulate the GTF file into a GRangesList, with each gene as a GRanges object
+## Step 2: Manipulate the GRanges object into a GRangesList, with each gene as a GRanges object
 
-Within each gene, we have intervals of exons as GRanges ranges. 
+We see that the whole GTF file is now represented by a single GRanges object, with 24904 ranges (i.e. intervals). This is not ideal for manipulating the exons within a single gene. We thus want to isolate each gene into its own GRanges object, which aids further downstream manipulation. To do this, we use `split()`, which splits a GRanges object into a GRangesList, according to the `gene_id` column. In the example below, we see that the whole chromosome 3 is split into its respective 2794 genes.
 
 ```r
 > grl_test <- split(gtf_test, elementMetadata(gtf_test)$gene_id)
@@ -369,7 +368,10 @@ GRanges object with 10 ranges and 7 metadata columns:
 ...
 <2793 more elements>
 ```
-## Step 3: Start to generate intronic bins within GTF file
+## Step 3: Generate intronic bins within GRangesList
+The GTF file is now represented in a suitable manner for manipulation (i.e. a GRangesList containing GRanges objects, with each GRanges object representing a single gene and containing all the exonic parts of that gene).
+
+![image](https://user-images.githubusercontent.com/68455070/128114454-8bea62a9-8ac7-447f-af56-1717a7e739c1.png)
 
 ### Breakdown of Function 1: add_introns
 The `add_introns()` function takes in a GRanges object containing only exonic regions, and inserts intronic parts between the existing exonic regions. 
@@ -433,9 +435,10 @@ add_introns <- function(gr) {
 }
 ```
 
-Function breakdown:
+`add_introns` function breakdown:
 
-We will use the first gene, `ENSMUSG00000000001.5`, in `grl_test` as an example. 
+The `add_introns` function parses the GRangesList into its GRanges objects, and generates intronic bins for each GRanges object. Thus, we will use the first gene (i.e. GRanges object), `ENSMUSG00000000001.5`, as an example of how the `add_introns` function works. We see below that this gene has 9 exonic parts. 
+
 ```r
 > grl_test$ENSMUSG00000000001.5
 
@@ -482,7 +485,9 @@ DataFrame with 10 rows and 7 columns
 8  dexseq_prepare_annotation.py    exonic_part        NA        NA ENSMUSG00000000001.5 ENSMUST00000000001.5                007
 9  dexseq_prepare_annotation.py    exonic_part        NA        NA ENSMUSG00000000001.5 ENSMUST00000000001.5                008
 10 dexseq_prepare_annotation.py    exonic_part        NA        NA ENSMUSG00000000001.5 ENSMUST00000000001.5                009
-
+```
+We notice that we have 10 intervals: 1 `aggregate_gene` and 9 `exonic_part`. We are only interested in the `exonic_part` entries, and we load them into the `exons` GRanges object. 
+```r
 > exons <- grl_test$ENSMUSG00000000001.5[which(elementMetadata(grl_test$ENSMUSG00000000001.5)$type=="exonic_part"),]
 
 > exons
@@ -518,7 +523,7 @@ GRanges object with 9 ranges and 7 metadata columns:
 [1] 9
 ```
 
-Get all exons but the last entry (since the last exon entry does not require a preceding intronic region).
+Get all exons but the last entry (since the last exon entry does not require a subsequent intronic region).
 ```r
 > seqnames(exons)[-1]
 
@@ -593,7 +598,7 @@ IRanges object with 8 ranges and 0 metadata columns:
   [8] 108031154 108053203     22050
 ```
 
-Getting the strand information for all but the last exonic region.
+Getting the strand information for all but the last exonic region, since we also want our intronic parts to match the strand information as our exonic parts.
 ```r
 > strand(exons)[-1]
 
@@ -604,7 +609,6 @@ Levels(3): + - *
 
 > strand <- strand(exons)[-1]
 ```
-
 Construct a new GRanges object, which holds all the **intronic** intervals sandwiched by the exonic intervals. By comparing `introns` to `exons` GRanges objects, we can see how the exonic regions are interspersed by intronic bins. 
 ```r
 > introns <- GRanges(seqnames=seqname, ranges=bounds, strand=strand)
@@ -686,7 +690,7 @@ if(length(DISCARD) > 0) { # if there are things to discard
 If there are intronic bins created for that gene (i.e. `if(length(introns) > 0)`), we proceed as follows:
 
 ```r
-> as.data.frame(elementMetadata(exons))
+> as.data.frame(elementMetadata(exons)) # only containing exonic parts
 
                         source        type score phase              gene_id          transcripts exonic_part_number
 1 dexseq_prepare_annotation.py exonic_part    NA    NA ENSMUSG00000000001.5 ENSMUST00000000001.5                001
@@ -1013,6 +1017,7 @@ GRanges object with 10 ranges and 7 metadata columns:
 
 ...
 <2793 more elements>
+
 # Result of applying with_introns function to each gene within the GRangesList
 > with_introns_grl_test
 
