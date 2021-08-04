@@ -10,7 +10,7 @@
 
 ### Overview of Steps
 
-![image](https://user-images.githubusercontent.com/68455070/128118508-a9f2a92a-1c59-420a-93a0-65ba1d3bfb4e.png)
+![image](https://user-images.githubusercontent.com/68455070/128118646-d9d2aed3-bf93-49ad-92ed-7276b91c06c7.png)
 
 ## Step 1: Read in flattened GTF file and convert into GRanges object
 ```r
