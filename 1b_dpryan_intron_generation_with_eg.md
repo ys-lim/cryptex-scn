@@ -8,6 +8,10 @@
 **[Step 3: Generate intronic bins within GRangesList](#step-3-generate-intronic-bins-within-grangeslist)**<br>
 **[Step 4: Generate a GTF file containing exonic and intronic bins](#step-4-generate-a-gtf-file-containing-exonic-and-intronic-bins)**<br>
 
+### Overview of Steps
+
+![image](https://user-images.githubusercontent.com/68455070/128118436-6cc7379a-43ef-479f-a7cd-15244f73b293.png)
+
 ## Step 1: Read in flattened GTF file and convert into GRanges object
 ```r
 > gtf_test <- import.gff2("gencode.vM27.primary_assembly.annotation.dexseq.chr3.gtf")
