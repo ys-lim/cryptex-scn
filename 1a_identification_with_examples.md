@@ -87,7 +87,9 @@ bedtools merge -i grouped_spliced_introns_sorted.bed -d 500 -c 1 -o count > spli
 bedtools intersect -a spliced_introns_merged.bed -b Mus_musculus.GRCm38.94.dexseq.introns.only.bed -wb | awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4,$8,$9}' | sort -k1,1V -k5,5n > cryptics_merged.bed
 ```
 
-This undos the effect of pre-cryptic tags that span across an exon of less than 500bp to be wrongly merged together. The intron gtf contains intervals of introns between exonic regions. We can conclude that a pre-cryptic tag that overlaps with two distinct intronic regions has been created via merging of two adjacent pre-cryptic tags across an exon (that is less than 500bp long).
+~~This undos the effect of pre-cryptic tags that span across an exon of less than 500bp to be wrongly merged together. The intron gtf contains intervals of introns between exonic regions. We can conclude that a pre-cryptic tag that overlaps with two distinct intronic regions has been created via merging of two adjacent pre-cryptic tags across an exon (that is less than 500bp long).~~
+
+This step annotates the merged intronic reads with a intronic segment from the intron BED file.
 
 Further breakdown of this step:
 
